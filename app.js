@@ -653,6 +653,8 @@ async function checkServerConnection() {
             isServerConnected = true;
             isSupabaseDirect = false;
             console.log("⚡ ZeroPerson Live Server Connected!");
+        } else {
+            throw new Error("Express server returned non-ok status");
         }
     } catch (e) {
         isServerConnected = false;
