@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZeroPerson Auto | Voice AI Garage Assistant & CRM</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for premium interactive visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">🚗</div>
+                <div class="logo-text">Zero<span>Person</span> <small class="logo-badge">Auto</small></div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-tab="dashboard">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                    Dashboard
+                </button>
+                <button class="nav-btn" data-tab="calls">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    Call Logs
+                </button>
+                <button class="nav-btn" data-tab="crm">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Light CRM
+                </button>
+                <button class="nav-btn" data-tab="config">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Platform Setup
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="avatar">ZP</div>
+                    <div class="user-details">
+                        <p class="user-name">ZeroPerson Auto</p>
+                        <p class="user-role">SaaS Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="topbar">
+                <div class="header-title">
+                    <h1 id="tab-title">Executive Dashboard</h1>
+                    <p class="subtitle" id="tab-subtitle">Real-time Voice AI insights & booking management</p>
+                </div>
+
+                <!-- Tenant / Company Switcher -->
+                <div class="tenant-switcher-container">
+                    <div class="db-status-badge" id="db-status-badge" style="font-size: 11px; padding: 4px 10px; background-color: var(--color-primary-glow); border-radius: 20px; color: var(--color-primary); font-weight: 700; border: 1px solid rgba(79, 70, 229, 0.15); display: flex; align-items: center; gap: 6px; margin-right: 15px;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background-color:var(--color-primary); animation:pulseGlow 1.5s infinite alternate;"></span>Initializing Connection...</div>
+                    <label for="tenant-select">Viewing Client:</label>
+                    <div class="custom-select-wrapper">
+                        <select id="tenant-select" class="tenant-select">
+                            <option value="dental" selected>🚗 Apex MOT & Auto Care</option>
+                            <option value="solar">🔧 Greenlight Motors & Garage</option>
+                            <option value="ecommerce">🏎️ Nova Performance & MOT</option>
+                        </select>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Tab -->
+            <section id="tab-dashboard" class="content-tab active">
+                <!-- Overview Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Total Calls Handled</span>
+                            <span class="stat-icon calls-icon">📞</span>
+                        </div>
+                        <h2 class="stat-value" id="stat-calls">1,248</h2>
+                        <div class="stat-change positive">
+                            <span class="arrow">↑</span> 12.4% <span class="period">vs last week</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Avg. Call Duration</span>
+                            <span class="stat-icon duration-icon">⏱️</span>
+                        </div>
+                        <h2 class="stat-value" id="stat-duration">2m 45s</h2>
+                        <div class="stat-change negative">
+                            <span class="arrow">↓</span> 3.1% <span class="period">vs last week</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Service Revenue Saved</span>
+                            <span class="stat-icon savings-icon">💰</span>
+                        </div>
+                        <h2 class="stat-value" id="stat-savings">£3,420.50</h2>
+                        <div class="stat-change positive">
+                            <span class="arrow">↑</span> 18.2% <span class="period">vs last week</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">MOT Booking Conversion</span>
+                            <span class="stat-icon sentiment-icon">📈</span>
+                        </div>
+                        <h2 class="stat-value" id="stat-sentiment">84% Success</h2>
+                        <div class="stat-change positive">
+                            <span class="arrow">↑</span> 4.5% <span class="period">vs last week</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts & Teased Insights Split Row -->
+                <div class="dashboard-split-row">
+                    <!-- Call Trends Chart -->
+                    <div class="panel chart-panel">
+                        <div class="panel-header">
+                            <h3>Call Traffic & Booking Metrics</h3>
+                            <span class="badge">Live Feed</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="callTrendsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- TEASED INSIGHTS PANEL (Extremely Premium) -->
+                    <div class="panel teasing-panel">
+                        <div class="panel-header">
+                            <div class="title-with-sparkle">
+                                <h3>🔮 Garage AI Intelligence & Teasers</h3>
+                                <span class="glowing-dot"></span>
+                            </div>
+                            <span class="badge premium">Pro Insights</span>
+                        </div>
+                        <p class="panel-desc">AI receptionist matching license plates, parsing diagnostic issues, and teasing revenue-generating leads.</p>
+                        
+                        <div class="teaser-container" id="teasers-list">
+                            <!-- Teasers will be loaded here dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Conversational Insights -->
+                <div class="panel table-panel">
+                    <div class="panel-header">
+                        <h3>Active Receptionist Performance</h3>
+                        <button class="btn btn-secondary" onclick="document.querySelector('[data-tab=calls]').click()">View All Call Logs</button>
+                    </div>
+                    <div class="responsive-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Receptionist profile</th>
+                                    <th>Operation Type</th>
+                                    <th>Total Calls</th>
+                                    <th>Confirmed Bookings</th>
+                                    <th>Platform Fee</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assistant-summary-tbody">
+                                <!-- Assistants loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Call Logs Tab -->
+            <section id="tab-calls" class="content-tab">
+                <div class="panel filter-panel">
+                    <div class="filter-row">
+                        <div class="input-group">
+                            <input type="text" id="search-calls" placeholder="Search transcripts, registration marks, or callers...">
+                        </div>
+                        <div class="input-group">
+                            <select id="filter-sentiment">
+                                <option value="all">All Sentiments</option>
+                                <option value="positive">Positive</option>
+                                <option value="neutral">Neutral</option>
+                                <option value="negative">Negative</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <select id="filter-status">
+                                <option value="all">All Dispositions</option>
+                                <option value="completed">Fully Booked / Handled</option>
+                                <option value="transferred">Transferred to Workshop</option>
+                                <option value="voicemail">Left Voicemail</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calls Grid / List -->
+                <div class="calls-layout">
+                    <!-- Call List Sidebar -->
+                    <div class="call-list-panel">
+                        <div class="call-list-header">
+                            <span id="call-count-label">Loading call logs...</span>
+                        </div>
+                        <div class="call-scroll-list" id="call-scroll-list">
+                            <!-- Loaded Dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Call Detail Viewer -->
+                    <div class="call-detail-panel" id="call-detail-panel">
+                        <!-- Loaded Dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Light CRM Tab -->
+            <section id="tab-crm" class="content-tab">
+                <div class="crm-header-row">
+                    <div class="crm-stats">
+                        <div class="mini-stat">
+                            <span class="label">Total Leads</span>
+                            <strong id="crm-total-leads">0</strong>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="label">Requires Follow-up</span>
+                            <strong id="crm-needs-action" class="text-rose">0</strong>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="label">Saves/Service Value</span>
+                            <strong id="crm-converted-rev" class="text-emerald">£0</strong>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="add-crm-lead-btn">+ Add Manual Booking Contact</button>
+                </div>
+
+                <!-- Kanban Board for CRM -->
+                <div class="kanban-board">
+                    <!-- Column 1: Hot Leads -->
+                    <div class="kanban-column" id="col-hot">
+                        <div class="column-header">
+                            <h4>🔥 Hot Booking Opportunities</h4>
+                            <span class="column-count" id="count-hot">0</span>
+                        </div>
+                        <div class="kanban-cards" id="cards-hot">
+                            <!-- Cards dynamic -->
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Follow Up -->
+                    <div class="kanban-column" id="col-followup">
+                        <div class="column-header">
+                            <h4>⏳ Repair Follow-up Scheduled</h4>
+                            <span class="column-count" id="count-followup">0</span>
+                        </div>
+                        <div class="kanban-cards" id="cards-followup">
+                            <!-- Cards dynamic -->
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Closed/Handled -->
+                    <div class="kanban-column" id="col-closed">
+                        <div class="column-header">
+                            <h4>✅ Booked & Resolved</h4>
+                            <span class="column-count" id="count-closed">0</span>
+                        </div>
+                        <div class="kanban-cards" id="cards-closed">
+                            <!-- Cards dynamic -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Platform Setup Tab -->
+            <section id="tab-config" class="content-tab">
+                <div class="vapi-setup-layout">
+                    <!-- Form side -->
+                    <div class="panel setup-panel">
+                        <div class="panel-header">
+                            <h3>Voice Platform Connection</h3>
+                            <span class="badge premium">Connected</span>
+                        </div>
+                        <form id="vapi-config-form" class="setup-form">
+                            <div class="form-group">
+                                <label for="vapi-api-key">Secure API Key</label>
+                                <input type="password" id="vapi-api-key" class="form-control" value="••••••••••••••••••••••••••••••••" placeholder="zp-api-key-...">
+                                <small>Used to fetch call lists, registration lookups, and assistant statuses securely.</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vapi-webhook-url">Webhook Delivery Endpoint (Auto-configured)</label>
+                                <div class="copy-input-group">
+                                    <input type="text" id="vapi-webhook-url" class="form-control" value="https://api.zeroperson.co.uk/v1/webhooks/call-ended" readonly>
+                                    <button type="button" class="btn btn-secondary" onclick="navigator.clipboard.writeText('https://api.zeroperson.co.uk/v1/webhooks/call-ended')">Copy</button>
+                                </div>
+                                <small>Add this URL in your voice provider's Webhooks tab to push calls instantly to this panel.</small>
+                            </div>
+
+                            <div class="divider"></div>
+
+                            <h3>Default Assistant Settings</h3>
+                            <div class="form-row">
+                                <div class="form-group col-6">
+                                    <label for="assistant-voice">Voice Model</label>
+                                    <select id="assistant-voice" class="form-control">
+                                        <option value="eleven-rachel">ElevenLabs - Rachel (Warm, Helpful)</option>
+                                        <option value="eleven-josh">ElevenLabs - Josh (Professional)</option>
+                                        <option value="playht-larry">Play.ht - Larry (Casual)</option>
+                                        <option value="openai-alloy">OpenAI - Alloy (Standard)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-6">
+                                    <label for="assistant-temperature">Temperature (Creative vs Accurate)</label>
+                                    <input type="range" id="assistant-temperature" min="0" max="1" step="0.1" value="0.7" class="form-slider">
+                                    <div class="slider-labels">
+                                        <span>0.0 (Strict)</span>
+                                        <span>1.0 (Expressive)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="assistant-prompt">Core Prompt Instruction / Agent System Prompt</label>
+                                <textarea id="assistant-prompt" rows="5" class="form-control">You are a helpful receptionist representing Apex MOT & Auto Care. Your primary goal is to help customers book their MOT testing, annual service intervals, or answer price queries (£45 standard test fee). Ask for and verify their vehicle registration mark (VRM) before booking.</textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save Assistant Configurations</button>
+                        </form>
+                    </div>
+
+                    <!-- Informational Side -->
+                    <div class="panel setup-info-panel">
+                        <h3>🔑 Setup Instructions</h3>
+                        <div class="instruction-step">
+                            <div class="step-num">1</div>
+                            <div class="step-content">
+                                <h4>Generate your Voice Platform Credentials</h4>
+                                <p>Log in to your voice platform dashboard, navigate to API Settings, and copy your secure secret key into the form.</p>
+                            </div>
+                        </div>
+                        <div class="instruction-step">
+                            <div class="step-num">2</div>
+                            <div class="step-content">
+                                <h4>Setup Assistant Webhooks</h4>
+                                <p>Ensure call updates are delivered immediately. Setting the webhook guarantees that as soon as the client hangs up, the call recording, duration, and full audio log is processed by our AI pipeline.</p>
+                            </div>
+                        </div>
+                        <div class="instruction-step">
+                            <div class="step-num">3</div>
+                            <div class="step-content">
+                                <h4>Configure the CRM Sync</h4>
+                                <p>By default, calls classified with hot opportunities or follow-up needs are automatically pushed to the <strong>Light CRM</strong> dashboard, eliminating manual lead management.</p>
+                            </div>
+                        </div>
+
+                        <div class="status-box-glowing">
+                            <div class="status-indicator-active"></div>
+                            <div>
+                                <strong>System API Services: Operational</strong>
+                                <p>Latency: 42ms | Webhook Status: Active</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- INSIGHT UNLOCK MODAL (Teasing Feature) -->
+    <div class="modal-overlay" id="insight-modal">
+        <div class="modal-card glass-modal">
+            <button class="modal-close-btn" id="modal-close">&times;</button>
+            <div class="modal-header">
+                <span class="modal-tag premium">🔒 Locked CRM Insight</span>
+                <h3 id="modal-title">Unlock Detailed Lead Profile</h3>
+            </div>
+            <div class="modal-body">
+                <p class="modal-teaser-desc" id="modal-teaser-desc">Our AI detected a high-value customer conversation with specific requests. Unlock this contact profile to see call actions and export to your external CRM or handle internally.</p>
+                
+                <div class="blurred-content-preview">
+                    <div class="blurred-line w-70"></div>
+                    <div class="blurred-line w-90"></div>
+                    <div class="blurred-line w-50"></div>
+                </div>
+
+                <div class="unlock-benefit-grid">
+                    <div class="benefit">
+                        <span>📞</span>
+                        <strong>Full Contact Number</strong>
+                    </div>
+                    <div class="benefit">
+                        <span>🚗</span>
+                        <strong>License Plate & Vehicle Info</strong>
+                    </div>
+                    <div class="benefit">
+                        <span>🤖</span>
+                        <strong>Repair Value Estimate</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel">Close</button>
+                <button class="btn btn-primary btn-glowing" id="modal-unlock">Unlock & Add to Light CRM</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Import -->
+    <script src="app.js"></script>
+</body>
+</html>
