@@ -1060,9 +1060,6 @@ function switchTab(tabId) {
     } else if (tabId === "crm") {
         DOMElements.tabTitle.innerText = "Lightweight Voice CRM";
         DOMElements.tabSubtitle.innerText = `Track booking opportunities and scheduled car repair followups from phone calls`;
-    } else if (tabId === "config") {
-        DOMElements.tabTitle.innerText = "Platform Integration Hub";
-        DOMElements.tabSubtitle.innerText = `Configure API credentials, choose voices, and customize agent prompts`;
     } else if (tabId === "admin") {
         DOMElements.tabTitle.innerText = "SaaS Platform Admin Console";
         DOMElements.tabSubtitle.innerText = `Provision white-label garage accounts, manage active licenses, and assign Vapi AI receptionists`;

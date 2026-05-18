@@ -34,10 +34,6 @@
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     Light CRM
                 </button>
-                <button class="nav-btn" data-tab="config">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    Platform Setup
-                </button>
                 <button class="nav-btn" data-tab="admin">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     SaaS Admin Console
@@ -282,101 +278,9 @@
                 </div>
             </section>
 
-            <!-- Platform Setup Tab -->
-            <section id="tab-config" class="content-tab">
-                <div class="vapi-setup-layout">
-                    <!-- Form side -->
-                    <div class="panel setup-panel">
-                        <div class="panel-header">
-                            <h3>Voice Platform Connection</h3>
-                            <span class="badge premium">Connected</span>
-                        </div>
-                        <form id="vapi-config-form" class="setup-form">
-                            <div class="form-group">
-                                <label for="vapi-api-key">Secure API Key</label>
-                                <input type="password" id="vapi-api-key" class="form-control" value="••••••••••••••••••••••••••••••••" placeholder="zp-api-key-...">
-                                <small>Used to fetch call lists, registration lookups, and assistant statuses securely.</small>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="vapi-webhook-url">Webhook Delivery Endpoint (Auto-configured)</label>
-                                <div class="copy-input-group">
-                                    <input type="text" id="vapi-webhook-url" class="form-control" value="https://api.zeroperson.co.uk/v1/webhooks/call-ended" readonly>
-                                    <button type="button" class="btn btn-secondary" onclick="navigator.clipboard.writeText('https://api.zeroperson.co.uk/v1/webhooks/call-ended')">Copy</button>
-                                </div>
-                                <small>Add this URL in your voice provider's Webhooks tab to push calls instantly to this panel.</small>
-                            </div>
-
-                            <div class="divider"></div>
-
-                            <h3>Default Assistant Settings</h3>
-                            <div class="form-row">
-                                <div class="form-group col-6">
-                                    <label for="assistant-voice">Voice Model</label>
-                                    <select id="assistant-voice" class="form-control">
-                                        <option value="eleven-rachel">ElevenLabs - Rachel (Warm, Helpful)</option>
-                                        <option value="eleven-josh">ElevenLabs - Josh (Professional)</option>
-                                        <option value="playht-larry">Play.ht - Larry (Casual)</option>
-                                        <option value="openai-alloy">OpenAI - Alloy (Standard)</option>
-                                    </select>
-                                </div>
-                                <div class="form-group col-6">
-                                    <label for="assistant-temperature">Temperature (Creative vs Accurate)</label>
-                                    <input type="range" id="assistant-temperature" min="0" max="1" step="0.1" value="0.7" class="form-slider">
-                                    <div class="slider-labels">
-                                        <span>0.0 (Strict)</span>
-                                        <span>1.0 (Expressive)</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="assistant-prompt">Core Prompt Instruction / Agent System Prompt</label>
-                                <textarea id="assistant-prompt" rows="5" class="form-control">You are a helpful receptionist representing Apex MOT & Auto Care. Your primary goal is to help customers book their MOT testing, annual service intervals, or answer price queries (£45 standard test fee). Ask for and verify their vehicle registration mark (VRM) before booking.</textarea>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">Save Assistant Configurations</button>
-                        </form>
-                    </div>
-
-                    <!-- Informational Side -->
-                    <div class="panel setup-info-panel">
-                        <h3>🔑 Setup Instructions</h3>
-                        <div class="instruction-step">
-                            <div class="step-num">1</div>
-                            <div class="step-content">
-                                <h4>Generate your Voice Platform Credentials</h4>
-                                <p>Log in to your voice platform dashboard, navigate to API Settings, and copy your secure secret key into the form.</p>
-                            </div>
-                        </div>
-                        <div class="instruction-step">
-                            <div class="step-num">2</div>
-                            <div class="step-content">
-                                <h4>Setup Assistant Webhooks</h4>
-                                <p>Ensure call updates are delivered immediately. Setting the webhook guarantees that as soon as the client hangs up, the call recording, duration, and full audio log is processed by our AI pipeline.</p>
-                            </div>
-                        </div>
-                        <div class="instruction-step">
-                            <div class="step-num">3</div>
-                            <div class="step-content">
-                                <h4>Configure the CRM Sync</h4>
-                                <p>By default, calls classified with hot opportunities or follow-up needs are automatically pushed to the <strong>Light CRM</strong> dashboard, eliminating manual lead management.</p>
-                            </div>
-                        </div>
-
-                        <div class="status-box-glowing">
-                            <div class="status-indicator-active"></div>
-                            <div>
-                                <strong>System API Services: Operational</strong>
-                                <p>Latency: 42ms | Webhook Status: Active</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             <!-- SaaS Admin Console Tab -->
             <section id="tab-admin" class="content-tab">
+                <!-- Row 1: Accounts and Provisioning -->
                 <div class="vapi-setup-layout">
                     <!-- Garage accounts manager -->
                     <div class="panel setup-panel" style="flex: 1.5;">
@@ -432,6 +336,93 @@
                             </div>
                             <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px;">Activate SaaS License & Agent</button>
                         </form>
+                    </div>
+                </div>
+
+                <!-- Row 2: Central Platform Settings (Protected Admin Connection Hub) -->
+                <div class="vapi-setup-layout" style="margin-top: 30px;">
+                    <!-- Form side -->
+                    <div class="panel setup-panel" style="flex: 1.5;">
+                        <div class="panel-header">
+                            <h3>🔑 Central Voice Platform Connection</h3>
+                            <span class="badge premium">Protected Hub</span>
+                        </div>
+                        <p class="panel-desc" style="color: var(--color-text-muted); font-size: 13px; margin-top: 5px;">Configure global developer integrations and secret access tokens. This is hidden from end-user garages for strict security protection.</p>
+                        <form id="vapi-config-form" class="setup-form" style="margin-top: 20px; display: flex; flex-direction: column; gap: 15px;">
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="vapi-api-key" style="font-weight: 500; font-size: 13px;">Global Vapi Secure API Private Token</label>
+                                <input type="password" id="vapi-api-key" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--color-border); background-color: var(--color-surface); color: var(--color-text); font-family: inherit;" value="••••••••••••••••••••••••••••••••" placeholder="zp-api-key-...">
+                                <small style="color: var(--color-text-muted); font-size: 11px;">Used to securely synchronize call logs, query platform details, and deploy receptionist prompts.</small>
+                            </div>
+                            
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="vapi-webhook-url" style="font-weight: 500; font-size: 13px;">Unified Webhook Delivery Endpoint (Vapi -> Vercel)</label>
+                                <div class="copy-input-group" style="display: flex; gap: 10px;">
+                                    <input type="text" id="vapi-webhook-url" class="form-control" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--color-border); background-color: var(--color-surface); color: var(--color-text); font-family: inherit;" value="https://zeroperson-auto.vercel.app/api/voice-webhook" readonly>
+                                    <button type="button" class="btn btn-secondary" style="padding: 10px 15px; border-radius: 8px; cursor: pointer; border: 1px solid var(--color-border);" onclick="navigator.clipboard.writeText('https://zeroperson-auto.vercel.app/api/voice-webhook')">Copy Link</button>
+                                </div>
+                                <small style="color: var(--color-text-muted); font-size: 11px;">Configure this endpoint inside your central Vapi Dashboard webhooks settings so all calls route seamlessly to the Vercel serverless pipeline.</small>
+                            </div>
+
+                            <div class="divider" style="height: 1px; background-color: var(--color-border); margin: 10px 0;"></div>
+
+                            <h3>Default AI Receptionist Blueprint</h3>
+                            <div class="form-row" style="display: flex; gap: 15px;">
+                                <div class="form-group col-6" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                                    <label for="assistant-voice" style="font-weight: 500; font-size: 13px;">Primary Voice Engine</label>
+                                    <select id="assistant-voice" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--color-border); background-color: var(--color-surface); color: var(--color-text); font-family: inherit;">
+                                        <option value="eleven-rachel">ElevenLabs - Rachel (Warm, British helpful)</option>
+                                        <option value="eleven-josh">ElevenLabs - Josh (Professional corporate)</option>
+                                        <option value="playht-larry">Play.ht - Larry (Casual friendly)</option>
+                                        <option value="openai-alloy">OpenAI - Alloy (Neutral standard)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-6" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                                    <label for="assistant-temperature" style="font-weight: 500; font-size: 13px;">LLM Temperature (Creativity vs Adherence)</label>
+                                    <input type="range" id="assistant-temperature" min="0" max="1" step="0.1" value="0.7" class="form-slider" style="margin-top: 10px;">
+                                    <div class="slider-labels" style="display: flex; justify-content: space-between; font-size: 11px; color: var(--color-text-muted);">
+                                        <span>0.0 (Strict Guidelines)</span>
+                                        <span>1.0 (Highly Expressive)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="assistant-prompt" style="font-weight: 500; font-size: 13px;">Core System Blueprint Prompt</label>
+                                <textarea id="assistant-prompt" rows="5" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--color-border); background-color: var(--color-surface); color: var(--color-text); font-family: inherit; resize: vertical; min-height: 80px;">You are a professional, helpful receptionist assistant powered by ZeroPerson AI representing our active garage client. Your core objective is to book clients for their annual MOT, full servicing slots, or answer diagnostic pricing quotes. Politely request and log their vehicle registration license plate before concluding the booking.</textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px;">Save Global Connection Settings</button>
+                        </form>
+                    </div>
+
+                    <!-- Instructions side -->
+                    <div class="panel setup-info-panel" style="flex: 1;">
+                        <h3>SaaS Architect Credentials & Deployment</h3>
+                        <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
+                            <div class="instruction-step" style="display: flex; gap: 15px;">
+                                <div class="step-num" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background-color: var(--color-primary-glow); color: var(--color-primary); font-weight: 700; font-size: 13px; flex-shrink: 0;">1</div>
+                                <div class="step-content">
+                                    <h4 style="font-weight: 600; font-size: 14px;">Secure API Key Storage</h4>
+                                    <p style="color: var(--color-text-muted); font-size: 12px; margin-top: 3px;">Private tokens and global configurations are stored statefully. Changing settings here applies instantly across all white-label instances.</p>
+                                </div>
+                            </div>
+                            <div class="instruction-step" style="display: flex; gap: 15px;">
+                                <div class="step-num" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background-color: var(--color-primary-glow); color: var(--color-primary); font-weight: 700; font-size: 13px; flex-shrink: 0;">2</div>
+                                <div class="step-content">
+                                    <h4 style="font-weight: 600; font-size: 14px;">Global Webhook Routing</h4>
+                                    <p style="color: var(--color-text-muted); font-size: 12px; margin-top: 3px;">Vapi routes all calls to your secure serverless function. Your endpoint parses the incoming metadata, registers the audio, and saves it into Supabase under the designated tenant sandbox.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="status-box-glowing" style="margin-top: 35px; padding: 15px; border-radius: 10px; background: rgba(79, 70, 229, 0.04); border: 1px dashed rgba(79, 70, 229, 0.2); display: flex; gap: 12px; align-items: center;">
+                            <div class="status-indicator-active" style="width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; animation: pulseGlow 1.5s infinite alternate;"></div>
+                            <div style="font-size: 12px;">
+                                <strong style="font-weight: 600;">SaaS Core System Services: Online</strong>
+                                <p style="color: var(--color-text-muted); font-size: 11px; margin-top: 2px;">Vercel Pipeline: Operational | Security Audit: Safe</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

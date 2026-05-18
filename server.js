@@ -73,7 +73,11 @@ const seedCrm = [
     { id: "crm-19", tenant: "dental", name: "Lando Calrissian (MF77 SGL)", phone: "+44 7700 900334", summary: "Mustang blow manifold gasket booked.", tag: "booking", status: "followup" },
     { id: "crm-20", tenant: "dental", name: "Luke Skywalker (XW11 RED)", phone: "+44 7700 900446", summary: "Completed air con regas + MOT test.", tag: "booking", status: "closed" },
     { id: "crm-s1", tenant: "solar", name: "Alan Grant (RE20 OOP)", phone: "+44 7700 900445", summary: "Tesla Model 3 tire replacement quote and calibration.", tag: "upgrade", status: "followup" },
-    { id: "crm-e1", tenant: "ecommerce", name: "David Beck (DB08 FLY)", phone: "+44 7700 900771", summary: "Inquired about track-day exhaust noise testing. Coded as minor follow-up.", tag: "billing", status: "followup" }
+    { id: "crm-e1", tenant: "ecommerce", name: "David Beck (DB08 FLY)", phone: "+44 7700 900771", summary: "Inquired about track-day exhaust noise testing. Coded as minor follow-up.", tag: "billing", status: "followup" },
+    { id: "crm-p1", tenant: "prestige", name: "Lando Norris (LN04 MCL)", phone: "+44 7700 900404", summary: "Inquired about McLaren annual inspection and brake fluid change.", tag: "upgrade", status: "hot" },
+    { id: "crm-p2", tenant: "prestige", name: "George Russell (GR63 MER)", phone: "+44 7700 900505", summary: "Booked standard MOT test + wheel balancing check.", tag: "booking", status: "followup" },
+    { id: "crm-l1", tenant: "elite", name: "Lewis Hamilton (LH44 FER)", phone: "+44 7700 900444", summary: "Inquired about hypercar paint correction and ceramic detailing package (£1,500 value).", tag: "upgrade", status: "hot" },
+    { id: "crm-c1", tenant: "caledonian", name: "Sean Connery (SC07 AST)", phone: "+44 7700 900007", summary: "Booked DB5 carburetor calibration and safety inspection.", tag: "booking", status: "closed" }
 ];
 
 const seedTeasers = [
@@ -150,7 +154,10 @@ const seedTeasers = [
 const seedTenants = [
     { id: "dental", name: "Apex MOT & Auto Care", vapi_agent_id: "vapi-agent-apex", contact_email: "apex@mot.co.uk", status: "active" },
     { id: "solar", name: "Greenlight Motors & Garage", vapi_agent_id: "vapi-agent-greenlight", contact_email: "info@greenlight.co.uk", status: "active" },
-    { id: "ecommerce", name: "Nova Performance & MOT", vapi_agent_id: "vapi-agent-nova", contact_email: "team@novaperformance.co.uk", status: "active" }
+    { id: "ecommerce", name: "Nova Performance & MOT", vapi_agent_id: "vapi-agent-nova", contact_email: "team@novaperformance.co.uk", status: "active" },
+    { id: "prestige", name: "Prestige Motors Cardiff", vapi_agent_id: "vapi-agent-prestige", contact_email: "support@prestigecardiff.co.uk", status: "active" },
+    { id: "elite", name: "Elite Car Care London", vapi_agent_id: "vapi-agent-elite", contact_email: "contact@elitelondon.co.uk", status: "active" },
+    { id: "caledonian", name: "Caledonian MOT Edinburgh", vapi_agent_id: "vapi-agent-caledonian", contact_email: "info@caledonianmot.co.uk", status: "active" }
 ];
 
 function initializeTables() {
