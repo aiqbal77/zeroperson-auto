@@ -81,104 +81,212 @@
 
             <!-- Dashboard Tab -->
             <section id="tab-dashboard" class="content-tab active">
-                <!-- Overview Stats Grid -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-label">Total Calls Handled</span>
-                            <span class="stat-icon calls-icon">📞</span>
-                        </div>
-                        <h2 class="stat-value" id="stat-calls">1,248</h2>
-                        <div class="stat-change positive">
-                            <span class="arrow">↑</span> 12.4% <span class="period">vs last week</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-label">Avg. Call Duration</span>
-                            <span class="stat-icon duration-icon">⏱️</span>
-                        </div>
-                        <h2 class="stat-value" id="stat-duration">2m 45s</h2>
-                        <div class="stat-change negative">
-                            <span class="arrow">↓</span> 3.1% <span class="period">vs last week</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-label">Service Revenue Saved</span>
-                            <span class="stat-icon savings-icon">💰</span>
-                        </div>
-                        <h2 class="stat-value" id="stat-savings">£3,420.50</h2>
-                        <div class="stat-change positive">
-                            <span class="arrow">↑</span> 18.2% <span class="period">vs last week</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-label">MOT Booking Conversion</span>
-                            <span class="stat-icon sentiment-icon">📈</span>
-                        </div>
-                        <h2 class="stat-value" id="stat-sentiment">84% Success</h2>
-                        <div class="stat-change positive">
-                            <span class="arrow">↑</span> 4.5% <span class="period">vs last week</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Charts & Teased Insights Split Row -->
-                <div class="dashboard-split-row">
-                    <!-- Call Trends Chart -->
-                    <div class="panel chart-panel">
-                        <div class="panel-header">
-                            <h3>Call Traffic & Booking Metrics</h3>
-                            <span class="badge">Live Feed</span>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="callTrendsChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- TEASED INSIGHTS PANEL (Extremely Premium) -->
-                    <div class="panel teasing-panel">
-                        <div class="panel-header">
-                            <div class="title-with-sparkle">
-                                <h3>🔮 Garage AI Intelligence & Teasers</h3>
-                                <span class="glowing-dot"></span>
+                
+                <!-- VIEW 1: GLOBAL SAAS SUPER ADMIN VIEW -->
+                <div id="view-global-dashboard" style="display: none; flex-direction: column; gap: 30px; width: 100%;">
+                    <!-- Global Reseller Metrics Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card" style="border-left: 4px solid var(--color-primary);">
+                            <div class="stat-header">
+                                <span class="stat-label">Platform Total Calls</span>
+                                <span class="stat-icon" style="background-color: var(--color-primary-glow); color: var(--color-primary);">📞</span>
                             </div>
-                            <span class="badge premium">Pro Insights</span>
+                            <h2 class="stat-value" id="global-stat-calls">0</h2>
+                            <div class="stat-change positive">
+                                <span class="arrow">↑</span> Active Multi-Tenant Platform
+                            </div>
                         </div>
-                        <p class="panel-desc">AI receptionist matching license plates, parsing diagnostic issues, and teasing revenue-generating leads.</p>
-                        
-                        <div class="teaser-container" id="teasers-list">
-                            <!-- Teasers will be loaded here dynamically -->
+                        <div class="stat-card" style="border-left: 4px solid var(--color-emerald);">
+                            <div class="stat-header">
+                                <span class="stat-label">Combined Operational Savings</span>
+                                <span class="stat-icon" style="background-color: rgba(16, 185, 129, 0.08); color: var(--color-emerald);">💰</span>
+                            </div>
+                            <h2 class="stat-value" id="global-stat-savings">£0.00</h2>
+                            <div class="stat-change positive">
+                                <span class="arrow">↑</span> Multiplied Reseller Margins
+                            </div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid var(--color-cyan);">
+                            <div class="stat-header">
+                                <span class="stat-label">Active Garage Accounts</span>
+                                <span class="stat-icon" style="background-color: rgba(6, 182, 212, 0.08); color: var(--color-cyan);">⚙️</span>
+                            </div>
+                            <h2 class="stat-value" id="global-stat-tenants">0</h2>
+                            <div class="stat-change positive">
+                                <span class="arrow">↑</span> White-label sandboxes
+                            </div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid var(--color-amber);">
+                            <div class="stat-header">
+                                <span class="stat-label">Avg. Booking Conversion</span>
+                                <span class="stat-icon" style="background-color: rgba(245, 158, 11, 0.08); color: var(--color-amber);">📈</span>
+                            </div>
+                            <h2 class="stat-value" id="global-stat-conversion">0% Success</h2>
+                            <div class="stat-change positive">
+                                <span class="arrow">↑</span> Real-time AI processing
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SaaS Global Grid Row -->
+                    <div class="dashboard-split-row">
+                        <!-- Platform Traffic Trends -->
+                        <div class="panel chart-panel">
+                            <div class="panel-header">
+                                <h3>Global SaaS Multi-Tenant Traffic</h3>
+                                <span class="badge premium">Overall Load</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="globalTrafficChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Active Tenant Garages Grid -->
+                        <div class="panel table-panel" style="padding: 24px;">
+                            <div class="panel-header">
+                                <h3>Garages Performance Grid</h3>
+                                <span class="badge">Live Feeds</span>
+                            </div>
+                            <p class="panel-desc" style="margin-bottom: 15px;">Overview of call counts, agent connection status, and direct launch buttons for each tenant environment.</p>
+                            <div class="responsive-table">
+                                <table>
+                                    <thead>
+                                        <tr style="font-size: 11px; text-transform: uppercase;">
+                                            <th style="padding: 10px 8px; color: var(--text-dimmed);">Tenant name</th>
+                                            <th style="padding: 10px 8px; color: var(--text-dimmed);">Workspace ID</th>
+                                            <th style="padding: 10px 8px; text-align: center; color: var(--text-dimmed);">Calls</th>
+                                            <th style="padding: 10px 8px; text-align: right; color: var(--text-dimmed);">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="global-tenants-tbody">
+                                        <!-- Loaded Dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Recent Conversational Insights -->
-                <div class="panel table-panel">
-                    <div class="panel-header">
-                        <h3>Active Receptionist Performance</h3>
-                        <button class="btn btn-secondary" onclick="document.querySelector('[data-tab=calls]').click()">View All Call Logs</button>
+                <!-- VIEW 2: TENANT SUPER USER DASHBOARD (Analytics & Insights) -->
+                <div id="view-super-dashboard" style="display: flex; flex-direction: column; gap: 30px; width: 100%;">
+                    <!-- Overview Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Total Calls Handled</span>
+                                <span class="stat-icon calls-icon">📞</span>
+                            </div>
+                            <h2 class="stat-value" id="stat-calls">0</h2>
+                            <div class="stat-change positive">
+                                <span class="arrow">↑</span> 12.4% <span class="period">vs last week</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Avg. Call Duration</span>
+                                <span class="stat-icon duration-icon">⏱️</span>
+                            </div>
+                            <h2 class="stat-value" id="stat-duration">0s</h2>
+                            <div class="stat-change negative">
+                                <span class="arrow">↓</span> 3.1% <span class="period">vs last week</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Service Revenue Saved</span>
+                                <span class="stat-icon savings-icon">💰</span>
+                            </div>
+                            <h2 class="stat-value" id="stat-savings">£0.00</h2>
+                            <div class="stat-change positive">
+                                <span class="arrow">↑</span> 18.2% <span class="period">vs last week</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">MOT Booking Conversion</span>
+                                <span class="stat-icon sentiment-icon">📈</span>
+                            </div>
+                            <h2 class="stat-value" id="stat-sentiment">100% Success</h2>
+                            <div class="stat-change positive">
+                                <span class="arrow">↑</span> 4.5% <span class="period">vs last week</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="responsive-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Receptionist profile</th>
-                                    <th>Operation Type</th>
-                                    <th>Total Calls</th>
-                                    <th>Confirmed Bookings</th>
-                                    <th>Platform Fee</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="assistant-summary-tbody">
-                                <!-- Assistants loaded here -->
-                            </tbody>
-                        </table>
+
+                    <!-- Charts & Teased Insights Split Row -->
+                    <div class="dashboard-split-row">
+                        <!-- Call Trends Chart -->
+                        <div class="panel chart-panel">
+                            <div class="panel-header">
+                                <h3>Call Traffic & Booking Metrics</h3>
+                                <span class="badge">Live Feed</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="callTrendsChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- TEASED INSIGHTS PANEL (Extremely Premium) -->
+                        <div class="panel teasing-panel" style="padding: 26px;">
+                            <div class="panel-header">
+                                <div class="title-with-sparkle">
+                                    <h3>🔮 Garage AI Intelligence & Teasers</h3>
+                                    <span class="glowing-dot"></span>
+                                </div>
+                                <span class="badge premium">Pro Insights</span>
+                            </div>
+                            <p class="panel-desc">AI receptionist matching license plates, parsing diagnostic issues, and teasing revenue-generating leads.</p>
+                            
+                            <div class="teaser-container" id="teasers-list">
+                                <!-- Teasers will be loaded here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Conversational Insights -->
+                    <div class="panel table-panel">
+                        <div class="panel-header">
+                            <h3>Active Receptionist Performance</h3>
+                            <button class="btn btn-secondary" onclick="document.querySelector('[data-tab=calls]').click()">View All Call Logs</button>
+                        </div>
+                        <div class="responsive-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Receptionist profile</th>
+                                        <th>Operation Type</th>
+                                        <th>Total Calls</th>
+                                        <th>Confirmed Bookings</th>
+                                        <th>Platform Fee</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assistant-summary-tbody">
+                                    <!-- Assistants loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
+
+                <!-- VIEW 3: TENANT NORMAL USER DASHBOARD (Checklist & Task-Focused) -->
+                <div id="view-normal-dashboard" style="display: none; flex-direction: column; gap: 24px; width: 100%;">
+                    <div class="panel" style="padding: 30px;">
+                        <div class="panel-header" style="margin-bottom: 8px;">
+                            <div class="title-with-sparkle">
+                                <h3>📋 Actionable Garage Reception Tasks</h3>
+                                <span class="glowing-dot" style="background-color: var(--color-emerald); box-shadow: 0 0 10px var(--color-emerald);"></span>
+                            </div>
+                            <span class="badge premium" style="background-color: rgba(16, 185, 129, 0.08); color: var(--color-emerald); border-color: rgba(16, 185, 129, 0.15);">Action Items</span>
+                        </div>
+                        <p class="panel-desc" style="margin-bottom: 25px;">Checklist of booking callbacks, diagnostics, and vehicle issues captured by the AI agent during inbound customer conversations.</p>
+                        
+                        <div id="normal-tasks-list" style="display: flex; flex-direction: column; gap: 16px;">
+                            <!-- Task checklist items loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+
             </section>
 
             <!-- Call Logs Tab -->
@@ -499,18 +607,28 @@
             <div class="divider" style="height: 1px; background-color: var(--border-color); margin: 25px 0;"></div>
             
             <p style="color: var(--text-dimmed); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">💡 DEMO ACCESS ROLES (Tap to autofill):</p>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <button type="button" class="btn btn-secondary" onclick="autofillLogin('ansar', 'ansar123')" style="width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-muted);">
+            <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                <button type="button" class="btn btn-secondary" onclick="autofillLogin('ansar', 'ansar123')" style="width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 11px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-muted); align-items: center;">
                     <strong>👑 SaaS Super Admin (Ansar)</strong>
                     <span style="font-family: monospace; color: var(--text-dimmed);">ansar / ansar123</span>
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="autofillLogin('apex', 'apex123')" style="width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-muted);">
-                    <strong>🚗 Apex MOT Owner (Tenant)</strong>
-                    <span style="font-family: monospace; color: var(--text-dimmed);">apex / apex123</span>
+                <div style="height: 1px; background-color: var(--border-color); margin: 4px 0;"></div>
+                <button type="button" class="btn btn-secondary" onclick="autofillLogin('apex_super', 'apex123')" style="width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 11px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-muted); align-items: center;">
+                    <strong>📊 Apex MOT Manager (Super User)</strong>
+                    <span style="font-family: monospace; color: var(--text-dimmed);">apex_super / apex123</span>
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="autofillLogin('elite', 'elite123')" style="width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-muted);">
-                    <strong>🏎️ Elite Car Owner (Tenant)</strong>
-                    <span style="font-family: monospace; color: var(--text-dimmed);">elite / elite123</span>
+                <button type="button" class="btn btn-secondary" onclick="autofillLogin('apex_user', 'apex456')" style="width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 11px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-muted); align-items: center;">
+                    <strong>📋 Apex MOT Reception (Normal User)</strong>
+                    <span style="font-family: monospace; color: var(--text-dimmed);">apex_user / apex456</span>
+                </button>
+                <div style="height: 1px; background-color: var(--border-color); margin: 4px 0;"></div>
+                <button type="button" class="btn btn-secondary" onclick="autofillLogin('elite_super', 'elite123')" style="width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 11px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-muted); align-items: center;">
+                    <strong>📊 Elite Tuning Manager (Super User)</strong>
+                    <span style="font-family: monospace; color: var(--text-dimmed);">elite_super / elite123</span>
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="autofillLogin('elite_user', 'elite456')" style="width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 11px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-muted); align-items: center;">
+                    <strong>📋 Elite Tuning Operator (Normal User)</strong>
+                    <span style="font-family: monospace; color: var(--text-dimmed);">elite_user / elite456</span>
                 </button>
             </div>
         </div>

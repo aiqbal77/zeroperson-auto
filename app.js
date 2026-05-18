@@ -578,6 +578,7 @@ let currentTenant = "dental";
 let activeTab = "dashboard";
 let selectedCallId = null;
 let trendChart = null;
+let globalTrafficChart = null;
 let isServerConnected = false;
 let isSupabaseDirect = false;
 let activeTenants = []; // Dynamically populated tenants
@@ -585,7 +586,7 @@ let activeTenants = []; // Dynamically populated tenants
 // --- SaaS Authenticated Role Gatekeeper ---
 let currentUser = {
     username: null,
-    role: null, // "super-admin" or "tenant-admin"
+    role: null, // "super-admin", "tenant-super", or "tenant-normal"
     tenantId: null
 };
 
@@ -611,25 +612,63 @@ async function handleLoginSubmit(e) {
             role: "super-admin",
             tenantId: null
         };
-    } else if (userVal === "apex" && passVal === "apex123") {
+    } else if (userVal === "apex_super" && passVal === "apex123") {
         currentUser = {
-            username: "Apex MOT Admin",
-            role: "tenant-admin",
+            username: "Apex MOT Manager",
+            role: "tenant-super",
             tenantId: "dental"
         };
-    } else if (userVal === "elite" && passVal === "elite123") {
+    } else if (userVal === "apex_user" && passVal === "apex456") {
         currentUser = {
-            username: "Elite Admin",
-            role: "tenant-admin",
+            username: "Apex MOT Receptionist",
+            role: "tenant-normal",
+            tenantId: "dental"
+        };
+    } else if (userVal === "elite_super" && passVal === "elite123") {
+        currentUser = {
+            username: "Elite Tuning Manager",
+            role: "tenant-super",
             tenantId: "elite"
         };
+    } else if (userVal === "elite_user" && passVal === "elite456") {
+        currentUser = {
+            username: "Elite Operator",
+            role: "tenant-normal",
+            tenantId: "elite"
+        };
+    } else if (userVal.endsWith("_super")) {
+        const tenantId = userVal.replace("_super", "");
+        const matched = activeTenants.find(t => t.id === tenantId);
+        if (matched && passVal === `${tenantId}123`) {
+            currentUser = {
+                username: `${matched.name} Manager`,
+                role: "tenant-super",
+                tenantId: tenantId
+            };
+        } else {
+            alert("❌ Invalid Access credentials! Please try standard reseller admin details or tap one of our demo accounts below.");
+            return;
+        }
+    } else if (userVal.endsWith("_user")) {
+        const tenantId = userVal.replace("_user", "");
+        const matched = activeTenants.find(t => t.id === tenantId);
+        if (matched && passVal === `${tenantId}456`) {
+            currentUser = {
+                username: `${matched.name} Operator`,
+                role: "tenant-normal",
+                tenantId: tenantId
+            };
+        } else {
+            alert("❌ Invalid Access credentials! Please try standard reseller admin details or tap one of our demo accounts below.");
+            return;
+        }
     } else {
-        // Fallback check: Look up dynamically provisioned tenant in activeTenants
+        // Fallback backward compatibility check
         const matched = activeTenants.find(t => t.id === userVal);
         if (matched && passVal === `${userVal}123`) {
             currentUser = {
                 username: `${matched.name} Admin`,
-                role: "tenant-admin",
+                role: "tenant-super",
                 tenantId: matched.id
             };
         } else {
@@ -652,6 +691,9 @@ async function updateAuthUI() {
     
     if (!avatar || !name || !role) return;
 
+    // Show/hide switcher containers safely
+    const switcherContainer = document.querySelector(".topbar .tenant-switcher-container");
+
     if (currentUser.role === "super-admin") {
         avatar.innerText = "👑";
         avatar.style.background = "rgba(245, 158, 11, 0.08)";
@@ -664,29 +706,28 @@ async function updateAuthUI() {
         if (adminBtn) adminBtn.style.display = "flex";
         
         // Show tenant client dropdown
-        const selectorContainer = document.querySelector(".topbar .tenant-selector-container");
-        if (selectorContainer) selectorContainer.style.visibility = "visible";
+        if (switcherContainer) switcherContainer.style.display = "flex";
 
+        // SaaS Super Admin defaults to Global Dashboard on first login
+        if (currentTenant !== "global" && !currentUser.tenantId) {
+            currentTenant = "global";
+        }
     } else {
-        avatar.innerText = "🚗";
+        avatar.innerText = currentUser.role === "tenant-super" ? "📊" : "📋";
         avatar.style.background = "rgba(79, 70, 229, 0.08)";
         avatar.style.color = "#4f46e5";
         name.innerText = currentUser.username.length > 15 ? currentUser.username.substring(0, 15) + '...' : currentUser.username;
-        role.innerText = "Garage Operator";
+        role.innerText = currentUser.role === "tenant-super" ? "Garage Manager" : "Garage Operator";
 
         // Hide admin console tab completely
         const adminBtn = document.querySelector('.sidebar-nav button[data-tab="admin"]');
         if (adminBtn) adminBtn.style.display = "none";
         
         // Hide tenant select dropdown completely to prevent garage hopping
-        const selectorContainer = document.querySelector(".topbar .tenant-selector-container");
-        if (selectorContainer) selectorContainer.style.visibility = "hidden";
+        if (switcherContainer) switcherContainer.style.display = "none";
 
         // Switch automatically to their locked tenant
         currentTenant = currentUser.tenantId;
-        if (DOMElements.tenantSelect) {
-            DOMElements.tenantSelect.value = currentTenant;
-        }
 
         // Safeguard: Redirect if they were inside SaaS Admin panel
         if (activeTab === "admin") {
@@ -700,8 +741,17 @@ async function updateAuthUI() {
         }
     }
 
+    // Refresh tenants select options to contain or exclude global view
+    renderTenantsDropdown();
+
+    if (DOMElements.tenantSelect) {
+        DOMElements.tenantSelect.value = currentTenant;
+    }
+
     // Refresh CRM cards, KPIs, calls logs, and visuals under the new scope
-    await fetchSyncData();
+    if (currentTenant !== "global") {
+        await fetchSyncData();
+    }
     renderAll();
 }
 
@@ -859,6 +909,10 @@ function renderTenantsDropdown() {
     const currentVal = DOMElements.tenantSelect.value || currentTenant;
     
     let html = "";
+    if (currentUser.role === "super-admin") {
+        html += `<option value="global">🌐 Global Multi-Tenant Overview</option>`;
+    }
+    
     activeTenants.forEach(t => {
         let prefix = "🚗";
         if (t.id === "solar") prefix = "🔧";
@@ -868,9 +922,15 @@ function renderTenantsDropdown() {
         html += `<option value="${t.id}">${prefix} ${t.name}</option>`;
     });
     DOMElements.tenantSelect.innerHTML = html;
-    DOMElements.tenantSelect.value = currentVal;
     
-    currentTenant = DOMElements.tenantSelect.value || activeTenants[0]?.id || "dental";
+    // Set active select value safely
+    if ([...DOMElements.tenantSelect.options].some(o => o.value === currentVal)) {
+        DOMElements.tenantSelect.value = currentVal;
+    } else {
+        DOMElements.tenantSelect.value = currentUser.role === "super-admin" ? "global" : (activeTenants[0]?.id || "dental");
+    }
+    
+    currentTenant = DOMElements.tenantSelect.value;
 }
 
 function renderAdminGaragesTable() {
@@ -1025,6 +1085,7 @@ async function checkDatabaseStatus() {
 
 // --- Sync Data from Server if Connected ---
 async function fetchSyncData() {
+    if (currentTenant === "global") return;
     if (isSupabaseDirect) {
         try {
             // Fetch CRM
@@ -1104,7 +1165,9 @@ function setupEventListeners() {
     DOMElements.tenantSelect.addEventListener("change", async (e) => {
         currentTenant = e.target.value;
         selectedCallId = null;
-        await fetchSyncData();
+        if (currentTenant !== "global") {
+            await fetchSyncData();
+        }
         renderAll();
     });
 
@@ -1220,8 +1283,33 @@ function switchTab(tabId) {
 }
 
 // --- Universal Renderer ---
+// --- Universal Renderer ---
 function renderAll() {
+    if (currentUser.role === "super-admin" && currentTenant === "global") {
+        document.getElementById("view-global-dashboard").style.display = "flex";
+        document.getElementById("view-super-dashboard").style.display = "none";
+        document.getElementById("view-normal-dashboard").style.display = "none";
+
+        renderGlobalDashboard();
+        return;
+    }
+
+    if (currentUser.role === "tenant-normal") {
+        document.getElementById("view-global-dashboard").style.display = "none";
+        document.getElementById("view-super-dashboard").style.display = "none";
+        document.getElementById("view-normal-dashboard").style.display = "flex";
+
+        renderNormalUserTasks();
+        return;
+    }
+
+    // Default Super User view
+    document.getElementById("view-global-dashboard").style.display = "none";
+    document.getElementById("view-super-dashboard").style.display = "flex";
+    document.getElementById("view-normal-dashboard").style.display = "none";
+
     const data = tenantData[currentTenant];
+    if (!data) return;
 
     // 1. Stats rendering
     DOMElements.statCalls.innerText = data.stats.calls;
@@ -1257,6 +1345,182 @@ function renderAll() {
     // 6. Chart.js rendering
     renderChart();
 }
+
+function renderGlobalDashboard() {
+    let totalCalls = 0;
+    let totalSavingsVal = 0;
+
+    activeTenants.forEach(t => {
+        const data = tenantData[t.id];
+        if (data) {
+            totalCalls += parseInt(data.stats.calls) || 0;
+            const savingsNum = parseFloat(data.stats.savings.replace(/[^0-9.]/g, "")) || 0;
+            totalSavingsVal += savingsNum;
+        }
+    });
+
+    document.getElementById("global-stat-calls").innerText = totalCalls.toLocaleString();
+    document.getElementById("global-stat-savings").innerText = `£${totalSavingsVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    document.getElementById("global-stat-tenants").innerText = activeTenants.length;
+    document.getElementById("global-stat-conversion").innerText = "82% Success";
+
+    // Render active white-label table
+    let tbodyHtml = "";
+    activeTenants.forEach(t => {
+        const data = tenantData[t.id];
+        const callsCount = data ? data.stats.calls : 0;
+        tbodyHtml += `
+            <tr style="border-bottom: 1px solid var(--color-border); font-size: 13px;">
+                <td style="padding: 12px 8px;"><strong>${t.name}</strong></td>
+                <td style="padding: 12px 8px;"><code>${t.id}</code></td>
+                <td style="padding: 12px 8px; text-align: center;">${callsCount}</td>
+                <td style="padding: 12px 8px; text-align: right;">
+                    <button class="btn btn-secondary" onclick="launchGarageView('${t.id}')" style="padding: 4px 10px; font-size: 11px; border-radius: 6px; cursor: pointer; border-color: rgba(79, 70, 229, 0.2); color: var(--color-primary); background: transparent;">Launch Workspace</button>
+                </td>
+            </tr>
+        `;
+    });
+    document.getElementById("global-tenants-tbody").innerHTML = tbodyHtml;
+
+    // Draw combined SaaS load chart
+    renderGlobalChart();
+}
+
+window.launchGarageView = function(tenantId) {
+    currentTenant = tenantId;
+    if (DOMElements.tenantSelect) {
+        DOMElements.tenantSelect.value = tenantId;
+    }
+    renderAll();
+};
+
+function renderGlobalChart() {
+    const ctx = document.getElementById("globalTrafficChart");
+    if (!ctx) return;
+
+    if (globalTrafficChart) {
+        globalTrafficChart.destroy();
+    }
+
+    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    let callsSum = [0, 0, 0, 0, 0, 0, 0];
+
+    activeTenants.forEach(t => {
+        const data = tenantData[t.id];
+        if (data && data.chartData) {
+            for (let i = 0; i < 7; i++) {
+                callsSum[i] += data.chartData.calls[i] || 0;
+            }
+        }
+    });
+
+    const canvasCtx = ctx.getContext('2d');
+    const gradient = canvasCtx.createLinearGradient(0, 0, 0, 250);
+    gradient.addColorStop(0, 'rgba(79, 70, 229, 0.25)');
+    gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
+
+    globalTrafficChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Combined Platform Calls",
+                    data: callsSum,
+                    borderColor: "#4f46e5",
+                    borderWidth: 3,
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: "#06b6d4",
+                    pointBorderColor: "#ffffff",
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#64748b',
+                        font: { family: 'Outfit', size: 12, weight: '500' }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(0,0,0,0.03)' },
+                    ticks: { color: '#64748b', font: { family: 'Outfit', weight: '500' } }
+                },
+                y: {
+                    grid: { color: 'rgba(0,0,0,0.03)' },
+                    ticks: { color: '#64748b', font: { family: 'Outfit', weight: '500' } }
+                }
+            }
+        }
+    });
+}
+
+function renderNormalUserTasks() {
+    const listContainer = document.getElementById("normal-tasks-list");
+    if (!listContainer) return;
+
+    const crmLeads = tenantData[currentTenant].crm;
+    if (!crmLeads || crmLeads.length === 0) {
+        listContainer.innerHTML = `
+            <div style="text-align: center; color: var(--text-dimmed); padding: 40px; border: 1px dashed var(--border-color); border-radius: 12px; background: var(--bg-card);">
+                <span style="font-size: 28px; display: block; margin-bottom: 10px;">🎉</span>
+                <strong>All clear! No pending garage tasks.</strong>
+                <p style="font-size: 12px; margin-top: 5px; color: var(--text-dimmed);">All AI booking opportunities have been marked as resolved by managers or receptionists.</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = "";
+    crmLeads.forEach(l => {
+        let badgeStyle = "background-color: var(--color-primary-glow); color: var(--color-primary);";
+        let titlePrefix = "📅 Booking Request";
+        if (l.status === "hot") {
+            badgeStyle = "background-color: rgba(244, 63, 94, 0.08); color: var(--color-rose);";
+            titlePrefix = "🔥 Urgent Callback";
+        } else if (l.status === "followup") {
+            badgeStyle = "background-color: rgba(245, 158, 11, 0.08); color: var(--color-amber);";
+            titlePrefix = "⏳ Pending Followup Check";
+        }
+
+        html += `
+            <div class="teaser-card" style="cursor: default; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid ${l.status === 'hot' ? 'var(--color-rose)' : 'var(--color-primary)'}; background: var(--bg-card); padding: 20px; border-radius: 12px; box-shadow: var(--shadow-soft);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                    <div>
+                        <span class="teaser-label" style="${badgeStyle} font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">${titlePrefix}</span>
+                        <h4 style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-top: 6px;">${l.name}</h4>
+                    </div>
+                    <span style="font-size: 12px; font-weight: 600; color: var(--text-dimmed);">${l.phone}</span>
+                </div>
+                
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; background: var(--bg-main); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">${l.summary}</p>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="updateTaskStatus('${l.id}', 'followup')" style="padding: 6px 12px; font-size: 11px; border-radius: 6px; cursor: pointer;">⏳ Schedule Followup</button>
+                        <button class="btn btn-primary" onclick="updateTaskStatus('${l.id}', 'closed')" style="padding: 6px 12px; font-size: 11px; border-radius: 6px; cursor: pointer; background-color: var(--color-emerald); border-color: var(--color-emerald); color: white; box-shadow: none;">✅ Mark as Handled & Resolve</button>
+                    </div>
+                    <button onclick="deleteLead('${l.id}')" style="background: none; border: none; cursor: pointer; color: var(--text-dimmed); font-size: 14px;" title="Dismiss Task">🗑️ Dismiss</button>
+                </div>
+            </div>
+        `;
+    });
+    listContainer.innerHTML = html;
+}
+
+window.updateTaskStatus = async function(leadId, newStatus) {
+    await window.moveLead(leadId, newStatus);
+    renderNormalUserTasks();
+};
 
 // --- Render Chart.js Visualization ---
 function renderChart() {
