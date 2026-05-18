@@ -582,6 +582,148 @@ let isServerConnected = false;
 let isSupabaseDirect = false;
 let activeTenants = []; // Dynamically populated tenants
 
+// --- SaaS Authenticated Role Gatekeeper ---
+let currentUser = {
+    username: null,
+    role: null, // "super-admin" or "tenant-admin"
+    tenantId: null
+};
+
+function autofillLogin(username, password) {
+    const userField = document.getElementById("login-username");
+    const passField = document.getElementById("login-password");
+    if (userField && passField) {
+        userField.value = username;
+        passField.value = password;
+    }
+}
+window.autofillLogin = autofillLogin;
+
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    const userVal = document.getElementById("login-username").value.trim().toLowerCase();
+    const passVal = document.getElementById("login-password").value.trim();
+
+    // Authenticate roles
+    if (userVal === "ansar" && passVal === "ansar123") {
+        currentUser = {
+            username: "Ansar",
+            role: "super-admin",
+            tenantId: null
+        };
+    } else if (userVal === "apex" && passVal === "apex123") {
+        currentUser = {
+            username: "Apex MOT Admin",
+            role: "tenant-admin",
+            tenantId: "dental"
+        };
+    } else if (userVal === "elite" && passVal === "elite123") {
+        currentUser = {
+            username: "Elite Admin",
+            role: "tenant-admin",
+            tenantId: "elite"
+        };
+    } else {
+        // Fallback check: Look up dynamically provisioned tenant in activeTenants
+        const matched = activeTenants.find(t => t.id === userVal);
+        if (matched && passVal === `${userVal}123`) {
+            currentUser = {
+                username: `${matched.name} Admin`,
+                role: "tenant-admin",
+                tenantId: matched.id
+            };
+        } else {
+            alert("❌ Invalid Access credentials! Please try standard reseller admin details or tap one of our demo accounts below.");
+            return;
+        }
+    }
+
+    // Hide authentication page & update layout
+    document.getElementById("login-portal").classList.remove("active");
+    await updateAuthUI();
+    
+    alert(`👋 Welcome back, ${currentUser.username}! Loaded workspace in secure multi-tenant sandbox.`);
+}
+
+async function updateAuthUI() {
+    const avatar = document.getElementById("current-user-avatar");
+    const name = document.getElementById("current-user-name");
+    const role = document.getElementById("current-user-role");
+    
+    if (!avatar || !name || !role) return;
+
+    if (currentUser.role === "super-admin") {
+        avatar.innerText = "👑";
+        avatar.style.background = "rgba(245, 158, 11, 0.08)";
+        avatar.style.color = "#f59e0b";
+        name.innerText = currentUser.username;
+        role.innerText = "SaaS Super Admin";
+
+        // Show SaaS admin tab
+        const adminBtn = document.querySelector('.sidebar-nav button[data-tab="admin"]');
+        if (adminBtn) adminBtn.style.display = "flex";
+        
+        // Show tenant client dropdown
+        const selectorContainer = document.querySelector(".topbar .tenant-selector-container");
+        if (selectorContainer) selectorContainer.style.visibility = "visible";
+
+    } else {
+        avatar.innerText = "🚗";
+        avatar.style.background = "rgba(79, 70, 229, 0.08)";
+        avatar.style.color = "#4f46e5";
+        name.innerText = currentUser.username.length > 15 ? currentUser.username.substring(0, 15) + '...' : currentUser.username;
+        role.innerText = "Garage Operator";
+
+        // Hide admin console tab completely
+        const adminBtn = document.querySelector('.sidebar-nav button[data-tab="admin"]');
+        if (adminBtn) adminBtn.style.display = "none";
+        
+        // Hide tenant select dropdown completely to prevent garage hopping
+        const selectorContainer = document.querySelector(".topbar .tenant-selector-container");
+        if (selectorContainer) selectorContainer.style.visibility = "hidden";
+
+        // Switch automatically to their locked tenant
+        currentTenant = currentUser.tenantId;
+        if (DOMElements.tenantSelect) {
+            DOMElements.tenantSelect.value = currentTenant;
+        }
+
+        // Safeguard: Redirect if they were inside SaaS Admin panel
+        if (activeTab === "admin") {
+            activeTab = "dashboard";
+            const dashBtn = document.querySelector('.sidebar-nav button[data-tab="dashboard"]');
+            if (dashBtn) {
+                DOMElements.tabButtons.forEach(b => b.classList.remove("active"));
+                dashBtn.classList.add("active");
+            }
+            switchTab("dashboard");
+        }
+    }
+
+    // Refresh CRM cards, KPIs, calls logs, and visuals under the new scope
+    await fetchSyncData();
+    renderAll();
+}
+
+function handleLogout() {
+    currentUser = {
+        username: null,
+        role: null,
+        tenantId: null
+    };
+    
+    // Clear inputs
+    const userField = document.getElementById("login-username");
+    const passField = document.getElementById("login-password");
+    if (userField && passField) {
+        userField.value = "";
+        passField.value = "";
+    }
+    
+    // Bring back login screen
+    document.getElementById("login-portal").classList.add("active");
+}
+
 // --- Supabase Cloud Configuration ---
 const SUPABASE_URL = "https://aygohzqrlssxbuswesvn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_dVU_OP_PiZmRfwWUX4laIw_jdbhb4JO";
@@ -947,6 +1089,17 @@ async function fetchSyncData() {
 
 // --- Event Listener Setup ---
 function setupEventListeners() {
+    // SaaS Portal Authentication
+    const loginForm = document.getElementById("saas-login-form");
+    if (loginForm) {
+        loginForm.addEventListener("submit", handleLoginSubmit);
+    }
+
+    const logoutBtn = document.getElementById("saas-logout-btn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", handleLogout);
+    }
+
     // Tenant switcher
     DOMElements.tenantSelect.addEventListener("change", async (e) => {
         currentTenant = e.target.value;

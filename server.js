@@ -195,23 +195,33 @@ function initializeTables() {
             status TEXT
         )`);
 
-        // Seed if empty
+        // Seed CRM if empty
         sqliteDb.get("SELECT count(*) as count FROM crm", [], (err, row) => {
             if (row && row.count === 0) {
-                console.log("💾 Seeding local SQLite database...");
+                console.log("💾 Seeding local SQLite CRM table...");
                 const crmStmt = sqliteDb.prepare("INSERT INTO crm (id, tenant, name, phone, summary, tag, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 seedCrm.forEach(c => crmStmt.run(c.id, c.tenant, c.name, c.phone, c.summary, c.tag, c.status));
                 crmStmt.finalize();
+            }
+        });
 
+        // Seed Teasers if empty
+        sqliteDb.get("SELECT count(*) as count FROM teasers", [], (err, row) => {
+            if (row && row.count === 0) {
+                console.log("💾 Seeding local SQLite Teasers table...");
                 const tStmt = sqliteDb.prepare("INSERT INTO teasers (id, tenant, label, label_class, title, preview, benefit_desc, crm_tag, crm_contact) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 seedTeasers.forEach(t => tStmt.run(t.id, t.tenant, t.label, t.label_class, t.title, t.preview, t.benefit_desc, t.crm_tag, t.crm_contact));
                 tStmt.finalize();
+            }
+        });
 
+        // Seed Tenants if empty
+        sqliteDb.get("SELECT count(*) as count FROM tenants", [], (err, row) => {
+            if (row && row.count === 0) {
+                console.log("💾 Seeding local SQLite Tenants table...");
                 const tenStmt = sqliteDb.prepare("INSERT INTO tenants (id, name, vapi_agent_id, contact_email, status) VALUES (?, ?, ?, ?, ?)");
                 seedTenants.forEach(ten => tenStmt.run(ten.id, ten.name, ten.vapi_agent_id, ten.contact_email, ten.status));
                 tenStmt.finalize();
-                
-                console.log("💾 Local database successfully seeded.");
             }
         });
     });
