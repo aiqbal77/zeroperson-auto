@@ -38,6 +38,10 @@
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     Platform Setup
                 </button>
+                <button class="nav-btn" data-tab="admin">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    SaaS Admin Console
+                </button>
             </nav>
 
             <div class="sidebar-footer">
@@ -367,6 +371,67 @@
                                 <p>Latency: 42ms | Webhook Status: Active</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SaaS Admin Console Tab -->
+            <section id="tab-admin" class="content-tab">
+                <div class="vapi-setup-layout">
+                    <!-- Garage accounts manager -->
+                    <div class="panel setup-panel" style="flex: 1.5;">
+                        <div class="panel-header">
+                            <h3>Active Garage Accounts (White-Label Tenants)</h3>
+                            <span class="badge premium" id="total-garages-badge">3 Garages</span>
+                        </div>
+                        <p class="panel-desc" style="color: var(--color-text-muted); font-size: 13px; margin-top: 5px;">Manage your white-labeled garage accounts, edit their voice agents, and configure billing/licenses.</p>
+                        
+                        <div class="responsive-table" style="margin-top: 20px;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--color-border);">
+                                        <th style="padding: 10px 8px; font-weight: 600;">Garage Name</th>
+                                        <th style="padding: 10px 8px; font-weight: 600;">Tenant ID</th>
+                                        <th style="padding: 10px 8px; font-weight: 600;">Vapi Agent ID</th>
+                                        <th style="padding: 10px 8px; font-weight: 600;">Contact Email</th>
+                                        <th style="padding: 10px 8px; font-weight: 600;">Status</th>
+                                        <th style="padding: 10px 8px; font-weight: 600; text-align: right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-garages-tbody">
+                                    <!-- Loaded Dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Add new garage panel -->
+                    <div class="panel setup-panel" style="flex: 1;">
+                        <div class="panel-header">
+                            <h3>🚀 Provision New Garage</h3>
+                        </div>
+                        <form id="admin-provision-form" class="setup-form" style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="new-garage-name" style="font-weight: 500; font-size: 13px;">Garage / Client Name</label>
+                                <input type="text" id="new-garage-name" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--color-border); background-color: var(--color-surface); color: var(--color-text); font-family: inherit;" placeholder="e.g. Prestige Motors Cardiff" required>
+                            </div>
+                            <div class="form-row" style="display: flex; gap: 15px;">
+                                <div class="form-group col-6" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                                    <label for="new-garage-id" style="font-weight: 500; font-size: 13px;">Unique Tenant ID</label>
+                                    <input type="text" id="new-garage-id" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--color-border); background-color: var(--color-surface); color: var(--color-text); font-family: inherit;" placeholder="e.g. prestige" required>
+                                </div>
+                                <div class="form-group col-6" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                                    <label for="new-garage-email" style="font-weight: 500; font-size: 13px;">Client Email</label>
+                                    <input type="email" id="new-garage-email" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--color-border); background-color: var(--color-surface); color: var(--color-text); font-family: inherit;" placeholder="e.g. owner@prestige.co.uk" required>
+                                </div>
+                            </div>
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="new-garage-vapi" style="font-weight: 500; font-size: 13px;">Assign Vapi Voice Agent ID</label>
+                                <input type="text" id="new-garage-vapi" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--color-border); background-color: var(--color-surface); color: var(--color-text); font-family: inherit;" placeholder="e.g. 5d5a7b-3bdf-4a1e-b..." required>
+                                <small style="color: var(--color-text-muted); font-size: 11px;">Webhook events from this agent ID will automatically ingest call recordings directly into their specific Light CRM board.</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px;">Activate SaaS License & Agent</button>
+                        </form>
                     </div>
                 </div>
             </section>

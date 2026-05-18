@@ -580,6 +580,7 @@ let selectedCallId = null;
 let trendChart = null;
 let isServerConnected = false;
 let isSupabaseDirect = false;
+let activeTenants = []; // Dynamically populated tenants
 
 // --- Supabase Cloud Configuration ---
 const SUPABASE_URL = "https://aygohzqrlssxbuswesvn.supabase.co";
@@ -633,14 +634,175 @@ const DOMElements = {
     modalUnlock: document.getElementById("modal-unlock"),
     
     // Config Form
-    vapiConfigForm: document.getElementById("vapi-config-form")
+    vapiConfigForm: document.getElementById("vapi-config-form"),
+
+    // Admin Console Elements
+    adminGaragesTbody: document.getElementById("admin-garages-tbody"),
+    adminProvisionForm: document.getElementById("admin-provision-form"),
+    newGarageName: document.getElementById("new-garage-name"),
+    newGarageId: document.getElementById("new-garage-id"),
+    newGarageEmail: document.getElementById("new-garage-email"),
+    newGarageVapi: document.getElementById("new-garage-vapi"),
+    totalGaragesBadge: document.getElementById("total-garages-badge")
 };
+
+// --- Tenant Management Operations ---
+async function fetchTenants() {
+    if (isSupabaseDirect) {
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/tenants`, {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
+            });
+            if (res.ok) {
+                activeTenants = await res.json();
+                initializeTenantState();
+                return;
+            }
+        } catch (e) {
+            console.error("Supabase direct tenants fetch failed:", e);
+        }
+    }
+
+    try {
+        const res = await fetch('/api/tenants');
+        if (res.ok) {
+            activeTenants = await res.json();
+        }
+    } catch (e) {
+        console.error("Local tenants endpoint fetch failed, fallback to mock:", e);
+        activeTenants = [
+            { id: "dental", name: "Apex MOT & Auto Care", vapi_agent_id: "vapi-agent-apex", contact_email: "apex@mot.co.uk", status: "active" },
+            { id: "solar", name: "Greenlight Motors & Garage", vapi_agent_id: "vapi-agent-greenlight", contact_email: "info@greenlight.co.uk", status: "active" },
+            { id: "ecommerce", name: "Nova Performance & MOT", vapi_agent_id: "vapi-agent-nova", contact_email: "team@novaperformance.co.uk", status: "active" }
+        ];
+    }
+    initializeTenantState();
+}
+
+function initializeTenantState() {
+    activeTenants.forEach(t => {
+        if (!tenantData[t.id]) {
+            tenantData[t.id] = {
+                companyName: t.name,
+                stats: {
+                    calls: "0",
+                    duration: "0s",
+                    savings: "£0.00",
+                    sentiment: "100% Success"
+                },
+                assistants: [
+                    { name: `${t.name} Booking Assistant`, type: "Inbound Bookings", calls: 0, handoffs: "0%", cost: "£0.00", status: "Active" }
+                ],
+                chartData: {
+                    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                    calls: [0, 0, 0, 0, 0, 0, 0],
+                    cost: [0, 0, 0, 0, 0, 0, 0]
+                },
+                teasers: [],
+                calls: [],
+                crm: []
+            };
+        }
+    });
+
+    renderTenantsDropdown();
+    renderAdminGaragesTable();
+}
+
+function renderTenantsDropdown() {
+    if (!DOMElements.tenantSelect) return;
+    const currentVal = DOMElements.tenantSelect.value || currentTenant;
+    
+    let html = "";
+    activeTenants.forEach(t => {
+        let prefix = "🚗";
+        if (t.id === "solar") prefix = "🔧";
+        else if (t.id === "ecommerce") prefix = "🏎️";
+        else if (t.id !== "dental") prefix = "⚙️";
+        
+        html += `<option value="${t.id}">${prefix} ${t.name}</option>`;
+    });
+    DOMElements.tenantSelect.innerHTML = html;
+    DOMElements.tenantSelect.value = currentVal;
+    
+    currentTenant = DOMElements.tenantSelect.value || activeTenants[0]?.id || "dental";
+}
+
+function renderAdminGaragesTable() {
+    if (!DOMElements.adminGaragesTbody) return;
+    
+    DOMElements.totalGaragesBadge.innerText = `${activeTenants.length} Garages`;
+    
+    let html = "";
+    activeTenants.forEach(t => {
+        html += `
+            <tr style="border-bottom: 1px solid var(--color-border); font-size: 13px;">
+                <td style="padding: 12px 8px;"><strong>${t.name}</strong></td>
+                <td style="padding: 12px 8px;"><code>${t.id}</code></td>
+                <td style="padding: 12px 8px;"><code>${t.vapi_agent_id || 'Not Assigned'}</code></td>
+                <td style="padding: 12px 8px;">${t.contact_email}</td>
+                <td style="padding: 12px 8px;"><span class="badge" style="background-color: rgba(16, 185, 129, 0.08); color: #10b981; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 11px;">Active</span></td>
+                <td style="padding: 12px 8px; text-align: right;">
+                    <button class="btn btn-secondary" onclick="deleteTenantAccount('${t.id}')" style="padding: 4px 10px; font-size: 11px; border-radius: 6px; border-color: rgba(244, 63, 94, 0.2); color: #f43f5e; cursor: pointer; background: transparent;">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+    DOMElements.adminGaragesTbody.innerHTML = html;
+}
+
+async function deleteTenantAccount(id) {
+    if (id === "dental" || id === "solar" || id === "ecommerce") {
+        alert("🔒 Core template accounts are locked and cannot be deleted for demo protection!");
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to deactivate and delete client garage account '${id}'? This deletes all call logs, recordings, and CRM entries!`)) {
+        return;
+    }
+
+    if (isSupabaseDirect) {
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/tenants?id=eq.${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
+            });
+            if (res.ok) {
+                alert("✨ SaaS License successfully revoked & agent configurations removed!");
+                await fetchTenants();
+                return;
+            }
+        } catch (e) {
+            console.error("Supabase direct tenant delete failed:", e);
+        }
+    }
+
+    try {
+        const res = await fetch(`/api/tenants/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            alert("✨ SaaS License successfully revoked & agent configurations removed!");
+            await fetchTenants();
+        }
+    } catch (e) {
+        console.error("Failed to delete tenant:", e);
+    }
+}
+
+// Global hook for delete action
+window.deleteTenantAccount = deleteTenantAccount;
 
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
     setupEventListeners();
     await checkServerConnection();
     await checkDatabaseStatus();
+    await fetchTenants();
     await fetchSyncData();
     renderAll();
 });
@@ -821,6 +983,63 @@ function setupEventListeners() {
         e.preventDefault();
         alert("🎉 Platform Settings successfully saved & deployed to active voice receptionists!");
     });
+
+    // Admin provisioning form save
+    DOMElements.adminProvisionForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const newGarage = {
+            id: DOMElements.newGarageId.value.trim().toLowerCase().replace(/\s+/g, '-'),
+            name: DOMElements.newGarageName.value.trim(),
+            vapi_agent_id: DOMElements.newGarageVapi.value.trim(),
+            contact_email: DOMElements.newGarageEmail.value.trim(),
+            status: "active"
+        };
+        
+        // Validation: Unique ID
+        if (activeTenants.some(t => t.id === newGarage.id)) {
+            alert(`⚠️ A garage with Tenant ID '${newGarage.id}' already exists! Please choose a unique ID.`);
+            return;
+        }
+
+        if (isSupabaseDirect) {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/tenants`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(newGarage)
+                });
+                if (res.ok) {
+                    alert(`🎉 White-Label Tenant '${newGarage.name}' successfully provisioned on Supabase Cloud!`);
+                    DOMElements.adminProvisionForm.reset();
+                    await fetchTenants();
+                    return;
+                }
+            } catch (e) {
+                console.error("Direct Supabase tenant provision failed:", e);
+            }
+        }
+
+        try {
+            const res = await fetch('/api/tenants', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newGarage)
+            });
+            if (res.ok) {
+                alert(`🎉 White-Label Tenant '${newGarage.name}' successfully provisioned!`);
+                DOMElements.adminProvisionForm.reset();
+                await fetchTenants();
+            }
+        } catch (e) {
+            console.error("Failed to provision new tenant:", e);
+        }
+    });
 }
 
 // --- Tab Router Switcher ---
@@ -830,7 +1049,7 @@ function switchTab(tabId) {
     if (activeTabSection) activeTabSection.classList.add("active");
 
     // Update Header Text dynamically based on active tab
-    const tenantName = tenantData[currentTenant].companyName;
+    const tenantName = tenantData[currentTenant]?.companyName || "ZeroPerson Client";
     if (tabId === "dashboard") {
         DOMElements.tabTitle.innerText = "Executive Dashboard";
         DOMElements.tabSubtitle.innerText = `Real-time Voice AI insights & booking analytics for ${tenantName}`;
@@ -844,6 +1063,9 @@ function switchTab(tabId) {
     } else if (tabId === "config") {
         DOMElements.tabTitle.innerText = "Platform Integration Hub";
         DOMElements.tabSubtitle.innerText = `Configure API credentials, choose voices, and customize agent prompts`;
+    } else if (tabId === "admin") {
+        DOMElements.tabTitle.innerText = "SaaS Platform Admin Console";
+        DOMElements.tabSubtitle.innerText = `Provision white-label garage accounts, manage active licenses, and assign Vapi AI receptionists`;
     }
 }
 

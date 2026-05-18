@@ -147,6 +147,12 @@ const seedTeasers = [
     }
 ];
 
+const seedTenants = [
+    { id: "dental", name: "Apex MOT & Auto Care", vapi_agent_id: "vapi-agent-apex", contact_email: "apex@mot.co.uk", status: "active" },
+    { id: "solar", name: "Greenlight Motors & Garage", vapi_agent_id: "vapi-agent-greenlight", contact_email: "info@greenlight.co.uk", status: "active" },
+    { id: "ecommerce", name: "Nova Performance & MOT", vapi_agent_id: "vapi-agent-nova", contact_email: "team@novaperformance.co.uk", status: "active" }
+];
+
 function initializeTables() {
     sqliteDb.serialize(() => {
         // 1. CRM Table
@@ -173,6 +179,15 @@ function initializeTables() {
             crm_contact TEXT
         )`);
 
+        // 3. Tenants Table
+        sqliteDb.run(`CREATE TABLE IF NOT EXISTS tenants (
+            id TEXT PRIMARY KEY,
+            name TEXT,
+            vapi_agent_id TEXT,
+            contact_email TEXT,
+            status TEXT
+        )`);
+
         // Seed if empty
         sqliteDb.get("SELECT count(*) as count FROM crm", [], (err, row) => {
             if (row && row.count === 0) {
@@ -184,6 +199,11 @@ function initializeTables() {
                 const tStmt = sqliteDb.prepare("INSERT INTO teasers (id, tenant, label, label_class, title, preview, benefit_desc, crm_tag, crm_contact) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 seedTeasers.forEach(t => tStmt.run(t.id, t.tenant, t.label, t.label_class, t.title, t.preview, t.benefit_desc, t.crm_tag, t.crm_contact));
                 tStmt.finalize();
+
+                const tenStmt = sqliteDb.prepare("INSERT INTO tenants (id, name, vapi_agent_id, contact_email, status) VALUES (?, ?, ?, ?, ?)");
+                seedTenants.forEach(ten => tenStmt.run(ten.id, ten.name, ten.vapi_agent_id, ten.contact_email, ten.status));
+                tenStmt.finalize();
+                
                 console.log("💾 Local database successfully seeded.");
             }
         });
@@ -201,15 +221,22 @@ async function checkAndSeedSupabase() {
         }
 
         if (crmData && crmData.length === 0) {
-            console.log("☁️ Seeding Supabase Cloud tables...");
+            console.log("☁️ Seeding Supabase Cloud CRM and Teaser tables...");
             const { error: insErr } = await supabase.from('crm').insert(seedCrm);
             if (insErr) console.error("Error inserting seed CRM to Supabase:", insErr);
 
             const { error: tErr } = await supabase.from('teasers').insert(seedTeasers);
             if (tErr) console.error("Error inserting seed Teasers to Supabase:", tErr);
-            
-            console.log("☁️ Supabase Cloud database successfully seeded!");
         }
+
+        // Check tenants in Supabase
+        const { data: tenantsData, error: tenantsErr } = await supabase.from('tenants').select('id');
+        if (!tenantsErr && tenantsData && tenantsData.length === 0) {
+            console.log("☁️ Seeding Supabase Cloud tenants table...");
+            const { error: tenErr } = await supabase.from('tenants').insert(seedTenants);
+            if (tenErr) console.error("Error inserting seed Tenants to Supabase:", tenErr);
+        }
+
     } catch (e) {
         console.error("Supabase seeding exception:", e);
     }
@@ -495,6 +522,72 @@ app.post('/api/voice-webhook', async (req, res) => {
         console.error("❌ Error parsing Vapi Voice Webhook:", err);
         res.status(500).json({ error: err.message });
     }
+});
+
+// --- Tenant (Garage Accounts) Endpoints ---
+
+// 1. Get all active tenants
+app.get('/api/tenants', async (req, res) => {
+    if (dbMode === "supabase") {
+        try {
+            const { data, error } = await supabase.from('tenants').select('*');
+            if (error) throw error;
+            return res.json(data);
+        } catch (e) {
+            console.error("Supabase tenants fetch failed, fallback to local:", e);
+        }
+    }
+    sqliteDb.all("SELECT * FROM tenants", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// 2. Provision new tenant
+app.post('/api/tenants', async (req, res) => {
+    const { id, name, vapi_agent_id, contact_email, status } = req.body;
+    
+    if (dbMode === "supabase") {
+        try {
+            const { data, error } = await supabase.from('tenants').insert([{
+                id,
+                name,
+                vapi_agent_id,
+                contact_email,
+                status: status || 'active'
+            }]).select();
+            if (error) throw error;
+            return res.status(201).json(data[0]);
+        } catch (e) {
+            console.error("Supabase tenant insert failed, fallback to local:", e);
+        }
+    }
+    
+    sqliteDb.run(`INSERT INTO tenants (id, name, vapi_agent_id, contact_email, status) VALUES (?, ?, ?, ?, ?)`,
+        [id, name, vapi_agent_id, contact_email, status || 'active'], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.status(201).json({ id, name, vapi_agent_id, contact_email, status: status || 'active' });
+        });
+});
+
+// 3. Delete tenant
+app.delete('/api/tenants/:id', async (req, res) => {
+    const { id } = req.params;
+    
+    if (dbMode === "supabase") {
+        try {
+            const { error } = await supabase.from('tenants').delete().eq('id', id);
+            if (error) throw error;
+            return res.json({ success: true });
+        } catch (e) {
+            console.error("Supabase tenant delete failed, fallback to local:", e);
+        }
+    }
+    
+    sqliteDb.run(`DELETE FROM tenants WHERE id = ?`, [id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
 });
 
 // Start listening
