@@ -579,6 +579,12 @@ let activeTab = "dashboard";
 let selectedCallId = null;
 let trendChart = null;
 let isServerConnected = false;
+let isSupabaseDirect = false;
+
+// --- Supabase Cloud Configuration ---
+const SUPABASE_URL = "https://aygohzqrlssxbuswesvn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_dVU_OP_PiZmRfwWUX4laIw_jdbhb4JO";
+
 
 // --- DOM Element References ---
 const DOMElements = {
@@ -645,11 +651,27 @@ async function checkServerConnection() {
         const res = await fetch('/api/data/dental');
         if (res.ok) {
             isServerConnected = true;
+            isSupabaseDirect = false;
             console.log("⚡ ZeroPerson Live Server Connected!");
         }
     } catch (e) {
         isServerConnected = false;
-        console.warn("⚠️ Local server not running, falling back to static mockup mode.");
+        // Test direct Supabase connection in the cloud (Vercel)
+        try {
+            const sbRes = await fetch(`${SUPABASE_URL}/rest/v1/crm?limit=1`, {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
+            });
+            if (sbRes.ok) {
+                isSupabaseDirect = true;
+                console.log("☁️ ZeroPerson Direct Supabase Cloud Connected!");
+            }
+        } catch (err) {
+            isSupabaseDirect = false;
+            console.warn("⚠️ Local server and Supabase direct unreachable, falling back to static mockup mode.");
+        }
     }
 }
 
@@ -657,6 +679,14 @@ async function checkServerConnection() {
 async function checkDatabaseStatus() {
     const badge = document.getElementById("db-status-badge");
     if (!badge) return;
+
+    if (isSupabaseDirect) {
+        badge.innerHTML = `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background-color:#10b981; animation:pulseGlow 1.5s infinite alternate;"></span>☁️ Live Supabase Cloud`;
+        badge.style.backgroundColor = "rgba(16, 185, 129, 0.08)";
+        badge.style.color = "#10b981";
+        badge.style.borderColor = "rgba(16, 185, 129, 0.15)";
+        return;
+    }
 
     if (!isServerConnected) {
         badge.innerHTML = `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background-color:#ef4444; animation:pulseGlow 1.5s infinite alternate;"></span>📴 Static Mock Mode`;
@@ -689,6 +719,54 @@ async function checkDatabaseStatus() {
 
 // --- Sync Data from Server if Connected ---
 async function fetchSyncData() {
+    if (isSupabaseDirect) {
+        try {
+            // Fetch CRM
+            const crmRes = await fetch(`${SUPABASE_URL}/rest/v1/crm?tenant=eq.${currentTenant}`, {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
+            });
+            // Fetch Teasers
+            const teasersRes = await fetch(`${SUPABASE_URL}/rest/v1/teasers?tenant=eq.${currentTenant}`, {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
+            });
+
+            if (crmRes.ok && teasersRes.ok) {
+                const crmData = await crmRes.json();
+                const teasersData = await teasersRes.json();
+                
+                // Parse teasers crm_contact JSON
+                const parsedTeasers = teasersData.map(t => {
+                    let contact = t.crm_contact;
+                    if (typeof contact === 'string') {
+                        try { contact = JSON.parse(contact); } catch (e) {}
+                    }
+                    return {
+                        id: t.id,
+                        label: t.label,
+                        labelClass: t.label_class,
+                        title: t.title,
+                        preview: t.preview,
+                        benefitDesc: t.benefit_desc,
+                        crmTag: t.crm_tag,
+                        crmContact: contact
+                    };
+                });
+
+                tenantData[currentTenant].crm = crmData;
+                tenantData[currentTenant].teasers = parsedTeasers;
+            }
+        } catch (e) {
+            console.error("Failed syncing directly from Supabase:", e);
+        }
+        return;
+    }
+
     if (!isServerConnected) return;
     try {
         const res = await fetch(`/api/data/${currentTenant}`);
@@ -929,7 +1007,43 @@ DOMElements.modalUnlock.addEventListener("click", async () => {
     if (activeUnlockingTeaser) {
         const contact = activeUnlockingTeaser.crmContact;
         
-        if (isServerConnected) {
+        if (isSupabaseDirect) {
+            try {
+                // Post CRM lead to Supabase directly
+                const crmRes = await fetch(`${SUPABASE_URL}/rest/v1/crm`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: `crm-unlocked-${Date.now()}`,
+                        tenant: currentTenant,
+                        name: contact.name,
+                        phone: contact.phone,
+                        summary: contact.summary,
+                        tag: contact.tag,
+                        status: contact.status
+                    })
+                });
+
+                // Remove teaser from Supabase directly
+                const teaserRes = await fetch(`${SUPABASE_URL}/rest/v1/teasers?id=eq.${activeUnlockingTeaser.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                if (crmRes.ok && teaserRes.ok) {
+                    await fetchSyncData();
+                }
+            } catch (e) {
+                console.error("Error unlocking lead directly on Supabase:", e);
+            }
+        } else if (isServerConnected) {
             try {
                 // Post to Express backend
                 const res = await fetch(`/api/teasers/unlock/${currentTenant}`, {
@@ -1239,7 +1353,24 @@ function renderColumn(containerId, leads) {
 
 // Global scope window methods for board manipulation
 window.moveLead = async function(leadId, newStatus) {
-    if (isServerConnected) {
+    if (isSupabaseDirect) {
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/crm?id=eq.${leadId}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+            if (res.ok) {
+                await fetchSyncData();
+            }
+        } catch (e) {
+            console.error("Error moving lead directly on Supabase:", e);
+        }
+    } else if (isServerConnected) {
         try {
             const res = await fetch(`/api/crm/${currentTenant}/${leadId}`, {
                 method: 'PATCH',
@@ -1264,7 +1395,22 @@ window.moveLead = async function(leadId, newStatus) {
 
 window.deleteLead = async function(leadId) {
     if (confirm("Are you sure you want to remove this customer contact from your CRM?")) {
-        if (isServerConnected) {
+        if (isSupabaseDirect) {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/crm?id=eq.${leadId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                if (res.ok) {
+                    await fetchSyncData();
+                }
+            } catch (e) {
+                console.error("Error deleting lead directly on Supabase:", e);
+            }
+        } else if (isServerConnected) {
             try {
                 const res = await fetch(`/api/crm/${currentTenant}/${leadId}`, {
                     method: 'DELETE'
@@ -1291,7 +1437,32 @@ async function handleAddManualContact() {
     const summary = prompt("Enter booking requirements or requested date:");
     if (!summary) return;
 
-    if (isServerConnected) {
+    if (isSupabaseDirect) {
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/crm`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: `crm-manual-${Date.now()}`,
+                    tenant: currentTenant,
+                    name: name,
+                    phone: phone,
+                    summary: summary,
+                    tag: "booking",
+                    status: "hot"
+                })
+            });
+            if (res.ok) {
+                await fetchSyncData();
+            }
+        } catch (e) {
+            console.error("Error adding lead manually directly on Supabase:", e);
+        }
+    } else if (isServerConnected) {
         try {
             const res = await fetch(`/api/crm/${currentTenant}`, {
                 method: 'POST',
