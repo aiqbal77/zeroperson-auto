@@ -583,6 +583,70 @@ let isServerConnected = false;
 let isSupabaseDirect = false;
 let activeTenants = []; // Dynamically populated tenants
 
+// ==========================================
+// SECURE AUTHENTICATION MODULE (JWT-based)
+// ==========================================
+const Auth = {
+    token: null,
+    user: null,
+    
+    // Initialize auth from localStorage
+    init() {
+        const savedToken = localStorage.getItem('zp_token');
+        const savedUser = localStorage.getItem('zp_user');
+        
+        if (savedToken && savedUser) {
+            this.token = savedToken;
+            try {
+                this.user = JSON.parse(savedUser);
+                return true;
+            } catch (e) {
+                this.clear();
+                return false;
+            }
+        }
+        return false;
+    },
+    
+    // Store auth data
+    set(token, user) {
+        this.token = token;
+        this.user = user;
+        localStorage.setItem('zp_token', token);
+        localStorage.setItem('zp_user', JSON.stringify(user));
+    },
+    
+    // Clear auth data
+    clear() {
+        this.token = null;
+        this.user = null;
+        localStorage.removeItem('zp_token');
+        localStorage.removeItem('zp_user');
+    },
+    
+    // Check if authenticated
+    isAuthenticated() {
+        return !!this.token;
+    },
+    
+    // Get auth headers for API requests
+    getHeaders() {
+        return this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
+    },
+    
+    // Check if user has role
+    hasRole(...roles) {
+        return this.user && roles.includes(this.user.role);
+    },
+    
+    // Check if user can access tenant
+    canAccessTenant(tenantId) {
+        if (!this.user) return false;
+        if (this.user.role === 'super-admin') return true;
+        return this.user.tenantId === tenantId;
+    }
+};
+
 // --- SaaS Authenticated Role Gatekeeper ---
 let currentUser = {
     username: null,
@@ -600,88 +664,54 @@ function autofillLogin(username, password) {
 }
 window.autofillLogin = autofillLogin;
 
+/**
+ * Secure Login Handler - Calls backend API with JWT
+ * Replaces the insecure hardcoded credentials
+ */
 async function handleLoginSubmit(e) {
     e.preventDefault();
-    const userVal = document.getElementById("login-username").value.trim().toLowerCase();
-    const passVal = document.getElementById("login-password").value.trim();
-
-    // Authenticate roles
-    if (userVal === "ansar" && passVal === "ansar123") {
-        currentUser = {
-            username: "Ansar",
-            role: "super-admin",
-            tenantId: null
-        };
-    } else if (userVal === "apex_super" && passVal === "apex123") {
-        currentUser = {
-            username: "Apex MOT Manager",
-            role: "tenant-super",
-            tenantId: "dental"
-        };
-    } else if (userVal === "apex_user" && passVal === "apex456") {
-        currentUser = {
-            username: "Apex MOT Receptionist",
-            role: "tenant-normal",
-            tenantId: "dental"
-        };
-    } else if (userVal === "elite_super" && passVal === "elite123") {
-        currentUser = {
-            username: "Elite Tuning Manager",
-            role: "tenant-super",
-            tenantId: "elite"
-        };
-    } else if (userVal === "elite_user" && passVal === "elite456") {
-        currentUser = {
-            username: "Elite Operator",
-            role: "tenant-normal",
-            tenantId: "elite"
-        };
-    } else if (userVal.endsWith("_super")) {
-        const tenantId = userVal.replace("_super", "");
-        const matched = activeTenants.find(t => t.id === tenantId);
-        if (matched && passVal === `${tenantId}123`) {
-            currentUser = {
-                username: `${matched.name} Manager`,
-                role: "tenant-super",
-                tenantId: tenantId
-            };
-        } else {
-            alert("❌ Invalid Access credentials! Please try standard reseller admin details or tap one of our demo accounts below.");
-            return;
-        }
-    } else if (userVal.endsWith("_user")) {
-        const tenantId = userVal.replace("_user", "");
-        const matched = activeTenants.find(t => t.id === tenantId);
-        if (matched && passVal === `${tenantId}456`) {
-            currentUser = {
-                username: `${matched.name} Operator`,
-                role: "tenant-normal",
-                tenantId: tenantId
-            };
-        } else {
-            alert("❌ Invalid Access credentials! Please try standard reseller admin details or tap one of our demo accounts below.");
-            return;
-        }
-    } else {
-        // Fallback backward compatibility check
-        const matched = activeTenants.find(t => t.id === userVal);
-        if (matched && passVal === `${userVal}123`) {
-            currentUser = {
-                username: `${matched.name} Admin`,
-                role: "tenant-super",
-                tenantId: matched.id
-            };
-        } else {
-            alert("❌ Invalid Access credentials! Please try standard reseller admin details or tap one of our demo accounts below.");
-            return;
-        }
-    }
-
-    // Hide authentication page & update layout
-    document.getElementById("login-portal").classList.remove("active");
-    await updateAuthUI();
     
-    alert(`👋 Welcome back, ${currentUser.username}! Loaded workspace in secure multi-tenant sandbox.`);
+    const username = document.getElementById("login-username").value.trim().toLowerCase();
+    const password = document.getElementById("login-password").value;
+    
+    if (!username || !password) {
+        alert("❌ Please enter both username and password.");
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Login failed');
+        }
+        
+        // Store auth data securely
+        Auth.set(data.token, data.user);
+        
+        // Update current user state
+        currentUser = {
+            username: data.user.displayName || data.user.username,
+            role: data.user.role,
+            tenantId: data.user.tenantId
+        };
+        
+        // Hide authentication page & update layout
+        document.getElementById("login-portal").classList.remove("active");
+        await updateAuthUI();
+        
+        alert(`👋 Welcome back, ${data.user.displayName || data.user.username}!`);
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        alert(`❌ ${error.message}`);
+    }
 }
 
 async function updateAuthUI() {
@@ -755,12 +785,28 @@ async function updateAuthUI() {
     renderAll();
 }
 
-function handleLogout() {
-    currentUser = {
-        username: null,
-        role: null,
-        tenantId: null
-    };
+/**
+ * Secure Logout Handler
+ */
+async function handleLogout() {
+    try {
+        // Notify server (optional, for logging)
+        if (Auth.token) {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...Auth.getHeaders()
+                }
+            });
+        }
+    } catch (e) {
+        // Silent fail - client-side logout still proceeds
+    }
+    
+    // Clear auth data
+    Auth.clear();
+    currentUser = { username: null, role: null, tenantId: null };
     
     // Clear inputs
     const userField = document.getElementById("login-username");
@@ -986,7 +1032,18 @@ async function deleteTenantAccount(id) {
     }
 
     try {
-        const res = await fetch(`/api/tenants/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/tenants/${id}`, { 
+            method: 'DELETE',
+            headers: Auth.getHeaders()
+        });
+        
+        if (res.status === 401) {
+            Auth.clear();
+            document.getElementById("login-portal").classList.add("active");
+            alert("Session expired. Please login again.");
+            return;
+        }
+        
         if (res.ok) {
             alert("✨ SaaS License successfully revoked & agent configurations removed!");
             await fetchTenants();
@@ -1002,6 +1059,42 @@ window.deleteTenantAccount = deleteTenantAccount;
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
     setupEventListeners();
+    
+    // Initialize authentication from localStorage
+    if (Auth.init()) {
+        // Validate session with server
+        try {
+            const res = await fetch('/api/auth/me', {
+                headers: Auth.getHeaders()
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                currentUser = {
+                    username: data.user.username,
+                    role: data.user.role,
+                    tenantId: data.user.tenantId
+                };
+                // Hide login portal
+                document.getElementById("login-portal").classList.remove("active");
+                await updateAuthUI();
+            } else {
+                // Token invalid, clear it
+                Auth.clear();
+            }
+        } catch (e) {
+            // Server might be down, keep auth for now (will fail on API calls)
+            console.log("Could not validate session, proceeding with stored credentials");
+            currentUser = {
+                username: Auth.user.displayName || Auth.user.username,
+                role: Auth.user.role,
+                tenantId: Auth.user.tenantId
+            };
+            document.getElementById("login-portal").classList.remove("active");
+            await updateAuthUI();
+        }
+    }
+    
     await checkServerConnection();
     await checkDatabaseStatus();
     await fetchTenants();
@@ -1136,7 +1229,22 @@ async function fetchSyncData() {
 
     if (!isServerConnected) return;
     try {
-        const res = await fetch(`/api/data/${currentTenant}`);
+        // Use auth headers if available
+        const headers = {
+            'Content-Type': 'application/json',
+            ...Auth.getHeaders()
+        };
+        
+        const res = await fetch(`/api/data/${currentTenant}`, { headers });
+        
+        if (res.status === 401) {
+            // Token expired or invalid - logout
+            Auth.clear();
+            document.getElementById("login-portal").classList.add("active");
+            alert("Session expired. Please login again.");
+            return;
+        }
+        
         if (res.ok) {
             const serverData = await res.json();
             // Sync current CRM and teasers with the database server
@@ -2012,9 +2120,20 @@ window.moveLead = async function(leadId, newStatus) {
         try {
             const res = await fetch(`/api/crm/${currentTenant}/${leadId}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...Auth.getHeaders()
+                },
                 body: JSON.stringify({ status: newStatus })
             });
+            
+            if (res.status === 401) {
+                Auth.clear();
+                document.getElementById("login-portal").classList.add("active");
+                alert("Session expired. Please login again.");
+                return;
+            }
+            
             if (res.ok) {
                 await fetchSyncData();
             }
@@ -2051,8 +2170,17 @@ window.deleteLead = async function(leadId) {
         } else if (isServerConnected) {
             try {
                 const res = await fetch(`/api/crm/${currentTenant}/${leadId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: Auth.getHeaders()
                 });
+                
+                if (res.status === 401) {
+                    Auth.clear();
+                    document.getElementById("login-portal").classList.add("active");
+                    alert("Session expired. Please login again.");
+                    return;
+                }
+                
                 if (res.ok) {
                     await fetchSyncData();
                 }

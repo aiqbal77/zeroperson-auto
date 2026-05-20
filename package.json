@@ -1,18 +1,21 @@
 {
   "name": "vapipulse-backend",
   "version": "1.0.0",
-  "description": "VapiPulse Admin Panel & CRM Node.js Backend Server",
+  "description": "VapiPulse Admin Panel & CRM Node.js Backend Server with Secure Authentication",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "setup": "node scripts/setup-admin.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.0",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
     "sqlite3": "^6.0.1"
   }
 }
