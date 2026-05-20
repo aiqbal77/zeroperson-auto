@@ -6,7 +6,7 @@ const sqlite3 = require('sqlite3').verbose();
 const { createClient } = require('@supabase/supabase-js');
 
 // Import authentication
-const { authenticateToken, requireRole, requireTenantAccess, generateToken } = require('../middleware/auth');
+const { authenticateToken, requireRole, requireTenantAccess } = require('../middleware/auth');
 const authRoutes = require('../routes/auth');
 
 const app = express();
@@ -43,14 +43,13 @@ if (isSupabaseConfigured) {
   }
 }
 
-// SQLite in /tmp for serverless (read-only filesystem except /tmp)
+// SQLite in /tmp for serverless
 const sqliteDbPath = path.join('/tmp', 'database.sqlite');
 sqliteDb = new sqlite3.Database(sqliteDbPath, (err) => {
   if (err) {
     console.error("SQLite error:", err);
   } else {
     console.log("💾 SQLite connected");
-    // Create users table if not exists
     sqliteDb.run(`CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
@@ -102,29 +101,15 @@ app.get('/api/data/:tenant', requireTenantAccess, async (req, res) => {
       return res.json({ crm, teasers });
     }
     
-    // SQLite fallback
-    sqliteDb.all("SELECT * FROM crm WHERE tenant = ?", [tenant], (err, crm) => {
-      if (err) return res.status(500).json({ error: err.message });
-      
-      sqliteDb.all("SELECT * FROM teasers WHERE tenant = ?", [tenant], (err, rawTeasers) => {
-        if (err) return res.status(500).json({ error: err.message });
-        
-        const teasers = rawTeasers.map(t => ({
-          ...t,
-          labelClass: t.label_class,
-          benefitDesc: t.benefit_desc,
-          crmTag: t.crm_tag,
-          crmContact: JSON.parse(t.crm_contact)
-        }));
-        
-        res.json({ crm, teasers });
-      });
-    });
+    // Return empty data for now (SQLite needs seeding)
+    res.json({ crm: [], teasers: [] });
   } catch (e) {
     console.error("Error:", e);
     res.status(500).json({ error: e.message });
   }
 });
 
-// Export for serverless
-module.exports = app;
+// Vercel serverless handler
+module.exports = (req, res) => {
+  return app(req, res);
+};
