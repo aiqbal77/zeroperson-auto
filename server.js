@@ -679,9 +679,13 @@ app.post('/api/voice-webhook', async (req, res) => {
  }
 });
 
-// Start listening
-app.listen(PORT, () => {
- console.log(`
+// Export app for serverless (Vercel)
+module.exports = app;
+
+// Start listening only if running locally (not on Vercel)
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`
 🚀 ==========================================================
 🔥 ZeroPerson Auto Local SaaS Server Started!
 🔐 JWT Authentication Enabled
@@ -698,4 +702,5 @@ app.listen(PORT, () => {
    node scripts/setup-admin.js <username> <password>
 ========================================================== 🚀
  `);
-});
+  });
+}
