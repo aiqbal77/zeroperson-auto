@@ -26,10 +26,20 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
+// --- Detect Vercel Serverless Environment ---
+const isVercel = process.env.VERCEL === '1';
+
 // --- State and Database Mode ---
 let dbMode = "sqlite"; // "supabase" or "sqlite"
 let supabase = null;
 let sqliteDb = null;
+let initStatus = {
+  sqlite: 'skipped',
+  supabase: 'unconfigured',
+  seedAttempted: false,
+  seedCompleted: false,
+  error: null
+};
 
 // Validate Supabase credentials
 const sbUrl = process.env.SUPABASE_URL;
@@ -42,35 +52,45 @@ if (isSupabaseConfigured) {
  try {
  supabase = createClient(sbUrl, sbKey);
  dbMode = "supabase";
+ initStatus.supabase = 'configured';
  console.log("☁️ Connected to Supabase Cloud Database!");
  } catch (e) {
- console.error("⚠️ Failed to initialize Supabase client, falling back to SQLite:", e);
- dbMode = "sqlite";
+ console.error("⚠️ Failed to initialize Supabase client:", e.message);
+ initStatus.supabase = 'failed';
+ initStatus.error = e.message;
  }
 } else {
- dbMode = "sqlite";
- console.log("💾 Running in Local SQLite Relational Mode (Supabase not configured in .env)");
+ console.log("⚠️ Supabase not configured - Supabase URL/Key missing or placeholder values");
+ initStatus.supabase = 'not_configured';
 }
 
-// Make database accessible to routes
-app.locals.sqliteDb = null;
-app.locals.supabase = null;
-app.locals.dbMode = dbMode;
-
-// --- SQLite Database Initializer ---
-const sqliteDbPath = path.join(__dirname, 'database.sqlite');
-sqliteDb = new sqlite3.Database(sqliteDbPath, (err) => {
- if (err) {
- console.error("Failed to connect to SQLite file:", err);
- } else {
- console.log("💾 SQLite Relational database file opened successfully.");
- initializeTables();
+// --- SQLite Database Initializer (ONLY for local development) ---
+if (isVercel) {
+ console.log("🚀 Vercel serverless detected - skipping SQLite initialization");
+ console.log("📋 Database mode: SUPABASE ONLY");
+ initStatus.sqlite = 'skipped (vercel)';
+ dbMode = "supabase";
+} else {
+ // Local development - initialize SQLite with proper error handling
+ try {
+ const sqliteDbPath = path.join(__dirname, 'database.sqlite');
+ sqliteDb = new sqlite3.Database(sqliteDbPath, (err) => {
+  if (err) {
+   console.error("❌ Failed to connect to SQLite file:", err.message);
+   initStatus.sqlite = 'failed';
+  } else {
+   console.log("💾 SQLite Relational database file opened successfully.");
+   initStatus.sqlite = 'initialized';
+   initializeTables();
+  }
+ });
+ } catch (e) {
+ console.error("❌ SQLite initialization exception:", e.message);
+ initStatus.sqlite = 'exception';
+ initStatus.error = e.message;
+ dbMode = isSupabaseConfigured ? "supabase" : "sqlite";
  }
-});
-
-// Update app locals after SQLite connection
-app.locals.sqliteDb = sqliteDb;
-app.locals.supabase = supabase;
+}
 
 // Seed data to verify
 const seedCrm = [
@@ -316,8 +336,17 @@ CREATE TABLE users (
  }
 }
 
-// Trigger async Supabase checks
-setTimeout(checkAndSeedSupabase, 2000);
+// Trigger async Supabase checks with proper status tracking
+initStatus.seedAttempted = true;
+setTimeout(() => {
+  checkAndSeedSupabase().then(() => {
+    initStatus.seedCompleted = true;
+  }).catch(e => {
+    console.error("Seed function failed:", e);
+    initStatus.seedCompleted = false;
+    initStatus.error = e.message;
+  });
+}, 2000);
 
 // ==========================================
 // AUTHENTICATION ROUTES (Public)
@@ -332,9 +361,33 @@ app.use('/api/auth', authRoutes);
 // Apply authentication middleware to all /api routes except auth
 app.use('/api', authenticateToken);
 
+// --- Health Check Endpoint ---
+app.get('/api/health', (req, res) => {
+  const health = {
+    status: initStatus.sqlite === 'failed' || initStatus.supabase === 'failed' ? 'degraded' : 'ok',
+    mode: dbMode,
+    timestamp: new Date().toISOString(),
+    modules: {
+      sqlite: initStatus.sqlite,
+      supabase: initStatus.supabase,
+      auth: 'loaded'
+    },
+    vercel: isVercel,
+    seedStatus: {
+      attempted: initStatus.seedAttempted,
+      completed: initStatus.seedCompleted
+    }
+  };
+  res.json(health);
+});
+
 // Check database mode status
 app.get('/api/db-status', (req, res) => {
- res.json({ mode: dbMode });
+  res.json({ 
+    mode: dbMode,
+    vercel: isVercel,
+    initStatus
+  });
 });
 
 // 1. Get database records for active tenant (with tenant access control)
@@ -368,23 +421,27 @@ app.get('/api/data/:tenant', requireTenantAccess, async (req, res) => {
 });
 
 function fetchSqliteData(tenant, res) {
- sqliteDb.all("SELECT * FROM crm WHERE tenant = ?", [tenant], (err, crm) => {
+  // Only use SQLite if it was actually initialized (local mode)
+  if (!sqliteDb) {
+    return res.status(503).json({ error: 'SQLite not available in serverless mode' });
+  }
+  sqliteDb.all("SELECT * FROM crm WHERE tenant = ?", [tenant], (err, crm) => {
  if (err) return res.status(500).json({ error: err.message });
- 
+
  sqliteDb.all("SELECT * FROM teasers WHERE tenant = ?", [tenant], (err, rawTeasers) => {
  if (err) return res.status(500).json({ error: err.message });
- 
+
  const teasers = rawTeasers.map(t => ({
- ...t,
- labelClass: t.label_class,
- benefitDesc: t.benefit_desc,
- crmTag: t.crm_tag,
- crmContact: JSON.parse(t.crm_contact)
+  ...t,
+  labelClass: t.label_class,
+  benefitDesc: t.benefit_desc,
+  crmTag: t.crm_tag,
+  crmContact: JSON.parse(t.crm_contact)
  }));
 
  res.json({ crm, teasers });
- });
- });
+});
+});
 }
 
 // 2. Add dynamic CRM lead manually
