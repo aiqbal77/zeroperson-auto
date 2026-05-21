@@ -38,7 +38,9 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     env: {
       hasSupabase: !!supabase,
-      hasJwtSecret: !!process.env.JWT_SECRET
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      supabaseUrlPrefix: supabaseUrl ? supabaseUrl.substring(0, 15) + '...' : 'none',
+      nodeEnv: process.env.NODE_ENV
     }
   });
 });
