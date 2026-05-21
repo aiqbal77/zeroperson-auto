@@ -1,0 +1,6 @@
+# Vercel Environment Variables - ZeroPerson Auto
+# Import this file in Vercel dashboard: Settings → Environment Variables → Import
+
+JWT_SECRET=8856655591c8c8c8edea335d6342d60db09d5e223f03186b20a332a32899c76609df72ca868493350e58b0cef4a5f85ea50f7528be6be41ae36a860a9088b41f
+SUPABASE_URL=https://aygohzqrlssxbuswesvn.supabase.co
+SUPABASE_KEY=sb_publishable_dVU_OP_PiZmRfwWUX4laIw_jdbhb4JO
