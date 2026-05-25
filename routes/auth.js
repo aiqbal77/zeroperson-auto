@@ -88,7 +88,12 @@ router.post('/login', async (req, res) => {
 
     // Verify password
     console.log(`[AUTH] Comparing password for user: ${username}`);
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    const passwordHash = user.password_hash || user.password; // Support both names
+    if (!passwordHash) {
+      throw new Error('User record missing password hash field.');
+    }
+    
+    const isValidPassword = await bcrypt.compare(password, passwordHash);
     
     if (!isValidPassword) {
       console.log(`[AUTH] Login failed: Password mismatch`);
