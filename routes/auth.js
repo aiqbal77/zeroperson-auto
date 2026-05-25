@@ -22,22 +22,23 @@ router.post('/login', async (req, res) => {
     });
   }
 
+  const cleanUsername = username.trim().toLowerCase();
   const db = req.app.locals.sqliteDb;
   const supabase = req.app.locals.supabase;
   const dbMode = req.app.locals.dbMode;
 
-  console.log(`[AUTH] Login attempt: ${username} (DB Mode: ${dbMode})`);
+  console.log(`[AUTH] Login attempt: ${cleanUsername} (DB Mode: ${dbMode})`);
 
   try {
     let user = null;
 
     // Fetch user from database
     if (dbMode === 'supabase' && supabase) {
-      console.log(`[AUTH] Querying Supabase for user: ${username.toLowerCase()}`);
+      console.log(`[AUTH] Querying Supabase for user: ${cleanUsername}`);
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('username', username.toLowerCase())
+        .eq('username', cleanUsername)
         .single();
       
       if (error) {
