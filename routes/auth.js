@@ -26,22 +26,32 @@ router.post('/login', async (req, res) => {
   const supabase = req.app.locals.supabase;
   const dbMode = req.app.locals.dbMode;
 
+  console.log(`[AUTH] Login attempt: ${username} (DB Mode: ${dbMode})`);
+
   try {
     let user = null;
 
     // Fetch user from database
     if (dbMode === 'supabase' && supabase) {
+      console.log(`[AUTH] Querying Supabase for user: ${username.toLowerCase()}`);
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('username', username.toLowerCase())
         .single();
       
-      if (error && error.code !== 'PGRST116') {
-        console.error('Supabase user fetch error:', error);
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log(`[AUTH] User NOT found in Supabase: ${username.toLowerCase()}`);
+        } else {
+          console.error('[AUTH] Supabase user fetch error:', error);
+        }
+      } else {
+        console.log(`[AUTH] User found in Supabase: ${username.toLowerCase()} (Role: ${data.role})`);
       }
       user = data;
     } else if (db) {
+      console.log(`[AUTH] Querying SQLite for user: ${username.toLowerCase()}`);
       user = await new Promise((resolve, reject) => {
         db.get(
           'SELECT * FROM users WHERE username = ?',
@@ -52,9 +62,15 @@ router.post('/login', async (req, res) => {
           }
         );
       });
+      if (!user) {
+        console.log(`[AUTH] User NOT found in SQLite: ${username.toLowerCase()}`);
+      } else {
+        console.log(`[AUTH] User found in SQLite: ${username.toLowerCase()} (Role: ${user.role})`);
+      }
     }
 
     if (!user) {
+      console.log(`[AUTH] Login failed: User not found`);
       return res.status(401).json({ 
         error: 'Invalid credentials.',
         code: 'INVALID_CREDENTIALS'
@@ -63,6 +79,7 @@ router.post('/login', async (req, res) => {
 
     // Check if user is active
     if (user.status !== 'active') {
+      console.log(`[AUTH] Login failed: Account inactive`);
       return res.status(403).json({ 
         error: 'Account is inactive. Contact administrator.',
         code: 'ACCOUNT_INACTIVE'
@@ -70,14 +87,18 @@ router.post('/login', async (req, res) => {
     }
 
     // Verify password
+    console.log(`[AUTH] Comparing password for user: ${username}`);
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     
     if (!isValidPassword) {
+      console.log(`[AUTH] Login failed: Password mismatch`);
       return res.status(401).json({ 
         error: 'Invalid credentials.',
         code: 'INVALID_CREDENTIALS'
       });
     }
+
+    console.log(`[AUTH] Login SUCCESS: ${username}`);
 
     // Update last login
     const now = new Date().toISOString();
